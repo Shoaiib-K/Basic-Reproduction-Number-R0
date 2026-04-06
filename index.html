@@ -1457,15 +1457,64 @@
   <p>When we combine SEIR-type dynamics with treatment, co-infection, and disease interaction, models can have 8–15 compartments. The NGM approach scales naturally, but the algebra becomes substantial. Here is the systematic framework.</p>
 
   <h3>General Strategy for Any Complex Co-infection Model</h3>
-  <ol class="steps">
-    <li><strong>List all compartments</strong>. Label them clearly. Identify which are infected (any compartment where the disease state is active — exposed, infectious, treated-while-infectious, etc.).</li>
-    <li><strong>Write all ODEs</strong>. Be careful about which terms appear where — especially for co-infected classes that can receive infections from multiple sources.</li>
-    <li><strong>Find DFE</strong>. Set all infected compartments to zero. In co-infection models, there are typically multiple DFEs: (1) fully disease-free ($I_A = I_B = 0$), (2) boundary equilibria (only one disease present). Compute $R_0$ at the fully disease-free equilibrium.</li>
-    <li><strong>Identify $n$ infected compartments</strong>. Construct $\mathcal{F}$ and $\mathcal{V}$ vectors.</li>
-    <li><strong>At DFE, linearise</strong>. Products of infected classes vanish. Only linear terms in infected classes survive in $\mathbf{F}$.</li>
-    <li><strong>Compute $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$</strong>. For large matrices, this may require a computer algebra system (e.g., Mathematica, SymPy, MATLAB).</li>
-    <li><strong>Find largest eigenvalue</strong> of $\mathbf{K}$. For $2\times2$ matrices: $\lambda = \frac{\text{tr}(\mathbf{K}) \pm \sqrt{\text{tr}(\mathbf{K})^2 - 4\det(\mathbf{K})}}{2}$. For larger matrices: use the characteristic polynomial or numerical methods.</li>
-  </ol>
+  <table class="steps">
+  <tr>
+    <td>1.</td>
+    <td>
+      List all compartments. Label them clearly. Identify which are infected 
+      (any compartment where the disease state is active — exposed, infectious, treated-while-infectious, etc.).
+    </td>
+  </tr>
+
+  <tr>
+    <td>2.</td>
+    <td>
+      Write all ODEs. Be careful about which terms appear where — especially for co-infected classes 
+      that can receive infections from multiple sources.
+    </td>
+  </tr>
+
+  <tr>
+    <td>3.</td>
+    <td>
+      Find DFE. Set all infected compartments to zero. In co-infection models, there are typically multiple DFEs: 
+      (1) fully disease-free $ (I_A = I_B = 0) $, (2) boundary equilibria (only one disease present). 
+      Compute $R_0$ at the fully disease-free equilibrium.
+    </td>
+  </tr>
+
+  <tr>
+    <td>4.</td>
+    <td>
+      Identify $n$ infected compartments. Construct $\mathcal{F}$ and $\mathcal{V}$ vectors.
+    </td>
+  </tr>
+
+  <tr>
+    <td>5.</td>
+    <td>
+      At DFE, linearise. Products of infected classes vanish. Only linear terms in infected classes 
+      survive in $\mathbf{F}$.
+    </td>
+  </tr>
+
+  <tr>
+    <td>6.</td>
+    <td>
+      Compute $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$. For large matrices, this may require a computer 
+      algebra system (e.g., Mathematica, SymPy, MATLAB).
+    </td>
+  </tr>
+
+  <tr>
+    <td>7.</td>
+    <td>
+      Find the largest eigenvalue of $\mathbf{K}$. For $2\times2$ matrices: 
+      $\lambda = \frac{\text{tr}(\mathbf{K}) \pm \sqrt{\text{tr}(\mathbf{K})^2 - 4\det(\mathbf{K})}}{2}$. 
+      For larger matrices: use the characteristic polynomial or numerical methods.
+    </td>
+  </tr>
+</table>
 
   <h3>Invasion Reproduction Numbers</h3>
 
