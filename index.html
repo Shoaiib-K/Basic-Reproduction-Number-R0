@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>R₀ in Epidemiological Models — Lecture Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, {
+    delimiters: [
+      {left:'$$',right:'$$',display:true},
+      {left:'$',right:'$',display:false},
+      {left:'\\\\(',right:'\\\\)',display:false},
+      {left:'\\\\[',right:'\\\\]',display:true}
+    ],
+    throwOnError: false
+  });"></script>
+<style>
+  :root {
+    --bg: #0f0e0c;
+    --bg2: #181611;
+    --bg3: #211f1a;
+    --bg4: #2a2720;
+    --gold: #c9a84c;
+    --gold-light: #e2c47a;
+    --gold-dim: #7a6330;
+    --cream: #f0e8d8;
+    --cream-dim: #b8a98a;
+    --red: #c0463c;
+    --teal: #4a9e96;
+    --blue: #5b8fc9;
+    --green: #6aab72;
+    --purple: #9b72c0;
+    --orange: #d47c42;
+    --border: #35301f;
+    --text: #ddd5c0;
+    --text-dim: #8a7f6a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+    min-height: 100vh;
+  }
+
+  /* NOISE TEXTURE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* SIDEBAR NAV */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 260px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0 0 2rem 0;
+  }
+
+  .sidebar-header {
+    padding: 1.5rem 1.2rem 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.8rem;
+  }
+
+  .sidebar-header .course-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .sidebar-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    color: var(--cream);
+    line-height: 1.3;
+  }
+
+  .nav-section {
+    padding: 0.3rem 0;
+  }
+
+  .nav-section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    padding: 0.6rem 1.2rem 0.3rem;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 0.35rem 1.2rem 0.35rem 1.5rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-family: 'Source Serif 4', serif;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+    line-height: 1.4;
+  }
+
+  .nav-link:hover {
+    color: var(--gold-light);
+    border-left-color: var(--gold);
+    background: rgba(201,168,76,0.05);
+  }
+
+  .nav-link.active {
+    color: var(--gold);
+    border-left-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+
+  /* MAIN CONTENT */
+  .main {
+    margin-left: 260px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #0f0e0c 0%, #1a1710 50%, #0f0e0c 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 5rem 5rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: 'R₀';
+    position: absolute;
+    right: 3rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Playfair Display', serif;
+    font-size: 18rem;
+    font-weight: 900;
+    color: rgba(201,168,76,0.04);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.4rem;
+    font-weight: 900;
+    color: var(--cream);
+    line-height: 1.1;
+    margin-bottom: 1.2rem;
+    max-width: 680px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 540px;
+    line-height: 1.7;
+  }
+
+  .hero-meta {
+    margin-top: 2.5rem;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--cream-dim);
+  }
+
+  .hero-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  /* CONTENT AREA */
+  .content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 3rem 4rem 6rem;
+  }
+
+  /* SECTIONS */
+  .section {
+    margin-bottom: 5rem;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.6rem;
+  }
+
+  h2.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--gold-light);
+    margin: 2.5rem 0 1rem;
+    font-weight: 700;
+  }
+
+  h4 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.05rem;
+    color: var(--cream);
+    margin: 1.8rem 0 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  p {
+    margin-bottom: 1.1rem;
+    color: var(--text);
+  }
+
+  /* BOXES */
+  .box {
+    border-radius: 3px;
+    padding: 1.4rem 1.6rem;
+    margin: 1.8rem 0;
+    position: relative;
+  }
+
+  .box::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+  }
+
+  .box-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 0.7rem;
+    display: block;
+  }
+
+  .box-definition {
+    background: rgba(201,168,76,0.07);
+    border: 1px solid rgba(201,168,76,0.2);
+  }
+  .box-definition::before { background: var(--gold); }
+  .box-definition .box-title { color: var(--gold); }
+
+  .box-theorem {
+    background: rgba(91,143,201,0.07);
+    border: 1px solid rgba(91,143,201,0.2);
+  }
+  .box-theorem::before { background: var(--blue); }
+  .box-theorem .box-title { color: var(--blue); }
+
+  .box-example {
+    background: rgba(106,171,114,0.07);
+    border: 1px solid rgba(106,171,114,0.2);
+  }
+  .box-example::before { background: var(--green); }
+  .box-example .box-title { color: var(--green); }
+
+  .box-warning {
+    background: rgba(192,70,60,0.07);
+    border: 1px solid rgba(192,70,60,0.2);
+  }
+  .box-warning::before { background: var(--red); }
+  .box-warning .box-title { color: var(--red); }
+
+  .box-insight {
+    background: rgba(155,114,192,0.07);
+    border: 1px solid rgba(155,114,192,0.2);
+  }
+  .box-insight::before { background: var(--purple); }
+  .box-insight .box-title { color: var(--purple); }
+
+  .box-method {
+    background: rgba(74,158,150,0.07);
+    border: 1px solid rgba(74,158,150,0.2);
+  }
+  .box-method::before { background: var(--teal); }
+  .box-method .box-title { color: var(--teal); }
+
+  /* MATH DISPLAY */
+  .math-block {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1.2rem 1.5rem;
+    margin: 1.4rem 0;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  /* DIAGRAM */
+  .diagram-wrap {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+
+  .diagram-caption {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 1rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* STEP LIST */
+  .steps {
+    counter-reset: step;
+    list-style: none;
+    margin: 1.2rem 0 1.5rem;
+  }
+
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+    align-items: flex-start;
+  }
+
+  .steps li::before {
+    content: counter(step);
+    background: var(--gold);
+    color: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 14.5px;
+  }
+
+  th {
+    background: var(--bg4);
+    color: var(--gold);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 0.7rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgba(53,48,31,0.6);
+    color: var(--text);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+
+  tr:hover td { background: rgba(201,168,76,0.03); }
+
+  /* INLINE CODE */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--bg4);
+    color: var(--gold-light);
+    padding: 0.15em 0.4em;
+    border-radius: 2px;
+  }
+
+  /* HORIZONTAL RULE */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+
+  /* PROGRESS INDICATOR */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 260px;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+    z-index: 200;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.1s;
+  }
+
+  /* COMPARTMENT LABEL styles embedded in SVGs */
+  svg text { font-family: 'JetBrains Mono', monospace; }
+
+  /* R0 FORMULA HIGHLIGHT */
+  .r0-highlight {
+    display: inline-block;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 3px;
+    padding: 0.2em 0.6em;
+    color: var(--gold-light);
+    font-size: 1.05em;
+  }
+
+  /* MATRIX */
+  .matrix-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin: 1.2rem 0;
+  }
+
+  .matrix-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--teal);
+    text-align: center;
+    margin-top: 0.4rem;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold-dim); }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .progress-bar { left: 0; }
+    .content { padding: 2rem 1.5rem 4rem; }
+    .hero { padding: 3rem 1.5rem 2.5rem; }
+    .hero h1 { font-size: 2.2rem; }
+    .hero::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <span class="course-tag">Epidemiological Modelling</span>
+    <h2>Lecture Notes on Basic Reproduction Number</h2>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Foundations</div>
+    <a class="nav-link" href="#intro">1. What is R₀?</a>
+    <a class="nav-link" href="#ngm">2. Next Generation Matrix</a>
+    <a class="nav-link" href="#params">3. Key Parameters</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Basic Models</div>
+    <a class="nav-link" href="#sir">4. SIR Model</a>
+    <a class="nav-link" href="#seir">5. SEIR Model</a>
+    <a class="nav-link" href="#sis">6. SIS Model</a>
+    <a class="nav-link" href="#sirs">7. SIRS Model</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Co-infection</div>
+    <a class="nav-link" href="#coinf-intro">8. Co-infection Basics</a>
+    <a class="nav-link" href="#basic-coinf">9. Basic Co-infection Model</a>
+    <a class="nav-link" href="#seir-coinf">10. SEIR Co-infection</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Complex Models</div>
+    <a class="nav-link" href="#complex">11. Complex Single-Disease</a>
+    <a class="nav-link" href="#complex-coinf">12. Complex Co-infection R₀</a>
+    <a class="nav-link" href="#pneu-flu">13. Pneumonia–Influenza Model</a>
+    <a class="nav-link" href="#interpretation">14. Interpretation & Control</a>
+  </div>
+</nav>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="hero-tag">Mathematical Epidemiology · Lecture Notes</span>
+    <h1>The Basic Reproduction Number <em>R₀</em></h1>
+    <p class="hero-sub">From simple single-pathogen models to complex co-infection systems — a complete, beginner-friendly guide to computing and interpreting R₀ using the Next Generation Matrix method.</p>
+    <div class="hero-meta">
+      <div class="hero-badge"><span class="dot"></span>SIR · SEIR · SIS · SIRS</div>
+      <div class="hero-badge"><span class="dot"></span>Co-infection Models</div>
+      <div class="hero-badge"><span class="dot"></span>Next Generation Matrix</div>
+      <div class="hero-badge"><span class="dot"></span>Pneumonia–Influenza Application</div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 1: WHAT IS R0 -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="intro">
+  <span class="section-number">Section 01</span>
+  <h2 class="section-title">What is R₀? — The Big Picture</h2>
+
+  <div class="box box-definition">
+    <span class="box-title">Definition</span>
+    <p><strong>The Basic Reproduction Number, $R_0$</strong>, is the average number of secondary infections produced by a single infectious individual in a <em>completely susceptible</em> population, in the <em>absence</em> of any interventions or immunity.</p>
+  </div>
+
+  <p>Think of it this way: if one sick person enters a town where no one has ever seen this disease before, $R_0$ tells you how many people that one person will infect, on average, before they either recover or die. Those newly infected people are called <em>secondary cases</em>.</p>
+
+  <h3>Why Does R₀ Matter?</h3>
+  <p>$R_0$ is perhaps the single most important number in epidemiology. It acts as a <strong>threshold</strong> that determines the fate of an outbreak:</p>
+
+  <div class="box box-theorem">
+    <span class="box-title">Threshold Theorem</span>
+    <p>$$R_0 < 1 \implies \text{disease dies out (epidemic impossible)}$$</p>
+    <p>$$R_0 = 1 \implies \text{disease persists at endemic equilibrium (borderline)}$$</p>
+    <p>$$R_0 > 1 \implies \text{disease spreads — epidemic or endemic possible}$$</p>
+  </div>
+
+  <table>
+    <tr><th>Disease</th><th>Estimated R₀</th><th>Implication</th></tr>
+    <tr><td>Measles</td><td>12–18</td><td>Extremely contagious; needs ~94% vaccination coverage</td></tr>
+    <tr><td>COVID-19 (original)</td><td>2.5–3</td><td>Each case leads to ~3 more; manageable with measures</td></tr>
+    <tr><td>Influenza (seasonal)</td><td>1.2–1.4</td><td>Moderate spread; annual vaccination campaigns needed</td></tr>
+    <tr><td>Pneumonia (community)</td><td>1.5–3.0</td><td>Varies significantly by setting and strain</td></tr>
+    <tr><td>Ebola (West Africa 2014)</td><td>1.5–2.5</td><td>Explosive in healthcare settings</td></tr>
+    <tr><td>SARS-CoV-1</td><td>2–5</td><td>Contained through public health measures</td></tr>
+  </table>
+
+  <h3>The Three Biological Ingredients of R₀</h3>
+  <p>$R_0$ is fundamentally built from three biological processes:</p>
+
+  <div class="math-block">
+    $$R_0 = \underbrace{\tau}_{\text{transmission rate}} \times \underbrace{c}_{\text{contact rate}} \times \underbrace{d}_{\text{infectious duration}}$$
+  </div>
+
+  <p>More precisely, $R_0$ is often expressed as:</p>
+
+  <div class="math-block">
+    $$R_0 = \frac{\beta}{\gamma}$$
+  </div>
+
+  <p>where $\beta$ is the <em>effective contact rate</em> (combining transmission probability per contact and contact rate), and $\gamma$ is the <em>recovery rate</em> (so $1/\gamma$ is the average duration of infection). This is the SIR formula — we will derive it carefully in Section 4.</p>
+
+  <div class="box box-insight">
+    <span class="box-title">Intuition</span>
+    <p>If an infected person is infectious for 5 days ($d = 5$) and infects 0.4 people per day ($\beta = 0.4$), then $R_0 = 0.4 \times 5 = 2$. Each case generates 2 new cases — the disease grows exponentially.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 2: NGM METHOD -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="ngm">
+  <span class="section-number">Section 02</span>
+  <h2 class="section-title">The Next Generation Matrix Method</h2>
+
+  <p>For simple models like SIR, we can find $R_0$ by inspection. But for complex models with multiple disease states and co-infections, we need a systematic, algebraic method. The <strong>Next Generation Matrix (NGM)</strong> method, developed by van den Driessche &amp; Watmough (2002), is the gold standard.</p>
+
+  <div class="box box-theorem">
+    <span class="box-title">Core Idea</span>
+    <p>The NGM method computes $R_0$ as the spectral radius (largest eigenvalue) of the <strong>Next Generation Matrix</strong> $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$, where $\mathbf{F}$ captures new infection flows and $\mathbf{V}$ captures all other transitions among infected compartments.</p>
+    <p style="margin-top:0.8rem;">$$\boxed{R_0 = \rho(\mathbf{F}\mathbf{V}^{-1})}$$</p>
+    <p>where $\rho(\cdot)$ denotes the <em>spectral radius</em> — the largest absolute eigenvalue.</p>
+  </div>
+
+  <h3>Step-by-Step Algorithm</h3>
+  <ol class="steps">
+    <li><strong>Write down the system of ODEs</strong> for each compartment. Clearly identify which compartments are "infected" (i.e., people in these states can transmit the disease).</li>
+    <li><strong>Find the Disease-Free Equilibrium (DFE)</strong>: Set all infected compartments to zero and solve for the equilibrium. This gives you the baseline state ($S^* = N$, all infected classes $= 0$).</li>
+    <li><strong>Identify infected compartments</strong>. Let there be $n$ such compartments (e.g., $E, I$ in SEIR gives $n=2$). Write the equations for these $n$ compartments.</li>
+    <li><strong>Decompose</strong> the right-hand side of infected compartment equations as: $\dot{x}_i = \mathcal{F}_i(\mathbf{x}) - \mathcal{V}_i(\mathbf{x})$, where $\mathcal{F}_i$ contains <strong>only</strong> new infection terms (inflow from susceptible class via transmission), and $\mathcal{V}_i$ contains all other transitions (disease progression, recovery, death).</li>
+    <li><strong>Linearise</strong> at the DFE: Compute the Jacobian matrices $\mathbf{F} = \left[\frac{\partial \mathcal{F}_i}{\partial x_j}\right]_{DFE}$ and $\mathbf{V} = \left[\frac{\partial \mathcal{V}_i}{\partial x_j}\right]_{DFE}$. Both $\mathbf{F}$ and $\mathbf{V}$ are $n \times n$ matrices.</li>
+    <li><strong>Compute $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$</strong>. Each entry $K_{ij}$ represents the expected number of new infections in compartment $i$ caused by an individual in compartment $j$, over their infectious lifetime.</li>
+    <li><strong>Find $R_0 = \rho(\mathbf{K})$</strong> — the largest eigenvalue of $\mathbf{K}$.</li>
+  </ol>
+
+  <div class="box box-warning">
+    <span class="box-title">Critical Rule</span>
+    <p><strong>$\mathcal{F}_i$ must ONLY contain new infection terms</strong> — meaning terms where a susceptible individual becomes infected. Disease progression (e.g., $E \to I$) is NOT a new infection; it belongs in $\mathcal{V}_i$. Getting this decomposition wrong will give an incorrect $R_0$.</p>
+  </div>
+
+  <h3>The Spectral Radius — What Is It?</h3>
+  <p>For an $n \times n$ matrix $\mathbf{A}$ with eigenvalues $\lambda_1, \lambda_2, \ldots, \lambda_n$, the spectral radius is:</p>
+  <div class="math-block">
+    $$\rho(\mathbf{A}) = \max_{i} |\lambda_i|$$
+  </div>
+  <p>For a $1\times1$ matrix (simple models), this is just the single entry. For a $2\times2$ matrix, it's the larger of the two eigenvalues. For larger matrices, you may need a computer to find it.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 3: PARAMETERS -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="params">
+  <span class="section-number">Section 03</span>
+  <h2 class="section-title">Key Parameters and Their Meaning</h2>
+
+  <p>Before we start computing $R_0$, you need to know what each parameter in these models means. This is your reference table:</p>
+
+  <table>
+    <tr><th>Symbol</th><th>Name</th><th>Units</th><th>Typical Range</th><th>Meaning</th></tr>
+    <tr><td>$N$</td><td>Total population</td><td>persons</td><td>any</td><td>Total number of individuals</td></tr>
+    <tr><td>$\mu$</td><td>Natural death/birth rate</td><td>per time</td><td>$0$ to $0.02$ yr⁻¹</td><td>Rate of natural births/deaths (often equal for constant population)</td></tr>
+    <tr><td>$\beta$</td><td>Transmission rate</td><td>per time per person</td><td>$0.1$ to $2$</td><td>Rate at which susceptibles become infected per infective contact</td></tr>
+    <tr><td>$\sigma$</td><td>Incubation rate</td><td>per time</td><td>$0.1$ to $1$</td><td>Rate of moving from Exposed to Infectious ($1/\sigma$ = incubation period)</td></tr>
+    <tr><td>$\gamma$</td><td>Recovery rate</td><td>per time</td><td>$0.1$ to $1$</td><td>Rate of moving from Infectious to Recovered ($1/\gamma$ = infectious period)</td></tr>
+    <tr><td>$\delta$</td><td>Disease-induced death rate</td><td>per time</td><td>$0$ to $0.1$</td><td>Rate of death due to disease (separate from natural death)</td></tr>
+    <tr><td>$\omega$</td><td>Waning immunity rate</td><td>per time</td><td>$0$ to $0.5$</td><td>Rate at which recovered individuals lose immunity (in SIRS)</td></tr>
+    <tr><td>$\Lambda$</td><td>Recruitment rate</td><td>persons per time</td><td>any</td><td>Rate of new individuals entering the population (births/immigration)</td></tr>
+  </table>
+
+  <div class="box box-insight">
+    <span class="box-title">Units Check</span>
+    <p>$R_0$ is dimensionless (no units). So if $\beta$ is in "per day" and $\gamma$ is in "per day", then $R_0 = \beta/\gamma$ has no units. Always verify this as a sanity check on your formula.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 4: SIR -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="sir">
+  <span class="section-number">Section 04</span>
+  <h2 class="section-title">The SIR Model — The Foundation</h2>
+
+  <h3>Compartment Structure</h3>
+  <p>The SIR model divides the population into three compartments:</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 560 140" xmlns="http://www.w3.org/2000/svg" style="max-width:560px;width:100%;">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#c9a84c"/>
+        </marker>
+        <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#c0463c"/>
+        </marker>
+        <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#6aab72"/>
+        </marker>
+      </defs>
+      <!-- S box -->
+      <rect x="30" y="45" width="100" height="50" rx="4" fill="#1a1711" stroke="#c9a84c" stroke-width="1.5"/>
+      <text x="80" y="67" text-anchor="middle" fill="#e2c47a" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">S</text>
+      <text x="80" y="84" text-anchor="middle" fill="#8a7f6a" font-size="10">Susceptible</text>
+      <!-- I box -->
+      <rect x="220" y="45" width="100" height="50" rx="4" fill="#1a1711" stroke="#c0463c" stroke-width="1.5"/>
+      <text x="270" y="67" text-anchor="middle" fill="#e06060" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">I</text>
+      <text x="270" y="84" text-anchor="middle" fill="#8a7f6a" font-size="10">Infectious</text>
+      <!-- R box -->
+      <rect x="410" y="45" width="100" height="50" rx="4" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="460" y="67" text-anchor="middle" fill="#6aab72" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">R</text>
+      <text x="460" y="84" text-anchor="middle" fill="#8a7f6a" font-size="10">Recovered</text>
+      <!-- S → I arrow -->
+      <line x1="130" y1="70" x2="218" y2="70" stroke="#c9a84c" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <text x="174" y="60" text-anchor="middle" fill="#c9a84c" font-size="11" font-family="'JetBrains Mono',monospace">βSI/N</text>
+      <!-- I → R arrow -->
+      <line x1="320" y1="70" x2="408" y2="70" stroke="#6aab72" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+      <text x="364" y="60" text-anchor="middle" fill="#6aab72" font-size="11" font-family="'JetBrains Mono',monospace">γI</text>
+      <!-- Birth into S -->
+      <line x1="80" y1="20" x2="80" y2="43" stroke="#5b8fc9" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="80" y="14" text-anchor="middle" fill="#5b8fc9" font-size="10" font-family="'JetBrains Mono',monospace">Λ</text>
+      <!-- Deaths -->
+      <line x1="80" y1="97" x2="80" y2="120" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="80" y="132" text-anchor="middle" fill="#666" font-size="9" font-family="'JetBrains Mono',monospace">μS</text>
+      <line x1="270" y1="97" x2="270" y2="120" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="270" y="132" text-anchor="middle" fill="#666" font-size="9" font-family="'JetBrains Mono',monospace">μI</text>
+      <line x1="460" y1="97" x2="460" y2="120" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="460" y="132" text-anchor="middle" fill="#666" font-size="9" font-family="'JetBrains Mono',monospace">μR</text>
+    </svg>
+    <div class="diagram-caption">Figure 1 — SIR compartmental model with constant recruitment Λ and natural death rate μ</div>
+  </div>
+
+  <h3>System of ODEs</h3>
+  <div class="math-block">
+    $$\begin{aligned}
+    \dot{S} &= \Lambda - \frac{\beta S I}{N} - \mu S \\[6pt]
+    \dot{I} &= \frac{\beta S I}{N} - \gamma I - \mu I \\[6pt]
+    \dot{R} &= \gamma I - \mu R
+    \end{aligned}$$
+  </div>
+
+  <p>Here $N = S + I + R$ is the total population, $\Lambda$ is the constant recruitment (birth) rate, and $\mu$ is the natural mortality rate. At steady state without disease, $S^* = \Lambda/\mu$.</p>
+
+  <h3>Finding R₀ for SIR — Method 1: Direct Inspection</h3>
+
+  <p>For simple models, we can find $R_0$ by a clever trick: at the start of an epidemic, $S \approx N$, and $I$ is very small. The equation for $\dot{I}$ becomes:</p>
+
+  <div class="math-block">
+    $$\dot{I} = \frac{\beta S I}{N} - (\gamma + \mu)I = \left[\frac{\beta S}{N} - (\gamma + \mu)\right]I$$
+  </div>
+
+  <p>For the epidemic to grow, we need $\dot{I} > 0$, which requires $\frac{\beta S}{N} > \gamma + \mu$. At the DFE, $S = N$ (everyone susceptible), so:</p>
+
+  <div class="math-block">
+    $$R_0 = \frac{\beta}{\gamma + \mu}$$
+  </div>
+
+  <div class="box box-example">
+    <span class="box-title">Worked Example — SIR</span>
+    <p>Suppose influenza has $\beta = 0.5$ day⁻¹, $\gamma = 0.1$ day⁻¹ (10-day infectious period), and $\mu = 0.00003$ day⁻¹ (human lifespan ~80 years). Then:</p>
+    <p>$$R_0 = \frac{0.5}{0.1 + 0.00003} \approx \frac{0.5}{0.10003} \approx 4.99$$</p>
+    <p>Since $\mu \ll \gamma$, we often simplify to $R_0 \approx \beta/\gamma = 0.5/0.1 = 5$. Each case generates roughly 5 new cases.</p>
+  </div>
+
+  <h3>Finding R₀ for SIR — Method 2: NGM</h3>
+
+  <p>There is only <strong>one infected compartment</strong>: $I$. So the NGM is $1 \times 1$.</p>
+
+  <p><strong>Identify the DFE:</strong> $S^* = \Lambda/\mu$, $I^* = 0$, $R^* = 0$.</p>
+
+  <p><strong>Write $\dot{I} = \mathcal{F}(I) - \mathcal{V}(I)$:</strong></p>
+  <div class="math-block">
+    $$\mathcal{F} = \frac{\beta S I}{N}, \qquad \mathcal{V} = (\gamma + \mu)I$$
+  </div>
+
+  <p><strong>Compute Jacobians at DFE</strong> (where $S^* = N = \Lambda/\mu$):</p>
+  <div class="math-block">
+    $$F = \left.\frac{\partial \mathcal{F}}{\partial I}\right|_{DFE} = \frac{\beta S^*}{N} = \beta, \qquad V = \left.\frac{\partial \mathcal{V}}{\partial I}\right|_{DFE} = \gamma + \mu$$
+  </div>
+
+  <p><strong>NGM:</strong> $K = FV^{-1} = \dfrac{\beta}{\gamma + \mu}$. Since it's $1\times1$, $\rho(K) = K$, so:</p>
+
+  <div class="math-block">
+    $$\boxed{R_0^{SIR} = \frac{\beta}{\gamma + \mu}}$$
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 5: SEIR -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="seir">
+  <span class="section-number">Section 05</span>
+  <h2 class="section-title">The SEIR Model — Adding an Exposed Class</h2>
+
+  <p>Many diseases have an <strong>incubation period</strong> — a lag time between when someone gets infected and when they become infectious themselves. The SEIR model adds an <strong>Exposed (E)</strong> compartment to capture this latency. People in $E$ are infected but not yet infectious.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg" style="max-width:700px;width:100%;">
+      <defs>
+        <marker id="arr1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c9a84c"/></marker>
+        <marker id="arr2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d47c42"/></marker>
+        <marker id="arr3" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6aab72"/></marker>
+        <marker id="arr4" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5b8fc9"/></marker>
+      </defs>
+      <!-- S -->
+      <rect x="20" y="50" width="95" height="50" rx="4" fill="#1a1711" stroke="#c9a84c" stroke-width="1.5"/>
+      <text x="67" y="72" text-anchor="middle" fill="#e2c47a" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">S</text>
+      <text x="67" y="89" text-anchor="middle" fill="#8a7f6a" font-size="10">Susceptible</text>
+      <!-- E -->
+      <rect x="185" y="50" width="95" height="50" rx="4" fill="#1a1711" stroke="#d47c42" stroke-width="1.5"/>
+      <text x="232" y="72" text-anchor="middle" fill="#d47c42" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">E</text>
+      <text x="232" y="89" text-anchor="middle" fill="#8a7f6a" font-size="10">Exposed</text>
+      <!-- I -->
+      <rect x="350" y="50" width="95" height="50" rx="4" fill="#1a1711" stroke="#c0463c" stroke-width="1.5"/>
+      <text x="397" y="72" text-anchor="middle" fill="#e06060" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">I</text>
+      <text x="397" y="89" text-anchor="middle" fill="#8a7f6a" font-size="10">Infectious</text>
+      <!-- R -->
+      <rect x="515" y="50" width="95" height="50" rx="4" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="562" y="72" text-anchor="middle" fill="#6aab72" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">R</text>
+      <text x="562" y="89" text-anchor="middle" fill="#8a7f6a" font-size="10">Recovered</text>
+      <!-- S→E -->
+      <line x1="115" y1="75" x2="183" y2="75" stroke="#c9a84c" stroke-width="1.5" marker-end="url(#arr1)"/>
+      <text x="149" y="65" text-anchor="middle" fill="#c9a84c" font-size="10" font-family="'JetBrains Mono',monospace">βSI/N</text>
+      <!-- E→I -->
+      <line x1="280" y1="75" x2="348" y2="75" stroke="#d47c42" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <text x="314" y="65" text-anchor="middle" fill="#d47c42" font-size="10" font-family="'JetBrains Mono',monospace">σE</text>
+      <!-- I→R -->
+      <line x1="445" y1="75" x2="513" y2="75" stroke="#6aab72" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <text x="479" y="65" text-anchor="middle" fill="#6aab72" font-size="10" font-family="'JetBrains Mono',monospace">γI</text>
+      <!-- Recruitment -->
+      <line x1="67" y1="22" x2="67" y2="48" stroke="#5b8fc9" stroke-width="1.2" marker-end="url(#arr4)"/>
+      <text x="67" y="16" text-anchor="middle" fill="#5b8fc9" font-size="10" font-family="'JetBrains Mono',monospace">Λ</text>
+    </svg>
+    <div class="diagram-caption">Figure 2 — SEIR model with latent (exposed) class. Infected individuals must pass through E before becoming infectious in I.</div>
+  </div>
+
+  <h3>System of ODEs</h3>
+  <div class="math-block">
+    $$\begin{aligned}
+    \dot{S} &= \Lambda - \frac{\beta S I}{N} - \mu S \\[6pt]
+    \dot{E} &= \frac{\beta S I}{N} - \sigma E - \mu E \\[6pt]
+    \dot{I} &= \sigma E - \gamma I - \mu I \\[6pt]
+    \dot{R} &= \gamma I - \mu R
+    \end{aligned}$$
+  </div>
+
+  <p>Here $\sigma$ is the rate of progression from exposed to infectious, so $1/\sigma$ is the average incubation period.</p>
+
+  <h3>Applying the NGM Method</h3>
+
+  <p>Now we have <strong>two infected compartments</strong>: $E$ and $I$. The NGM will be $2 \times 2$.</p>
+
+  <p><strong>Step 1 — DFE:</strong> $S^* = \Lambda/\mu$, $E^* = I^* = 0$, $R^* = 0$.</p>
+
+  <p><strong>Step 2 — Decompose infected compartment equations:</strong></p>
+
+  <div class="box box-method">
+    <span class="box-title">NGM Decomposition for SEIR</span>
+    <p>The infected state vector is $\mathbf{x} = (E, I)^T$. We decompose:</p>
+    <p style="margin-top:0.8rem;">$$\boldsymbol{\mathcal{F}} = \begin{pmatrix} \frac{\beta S I}{N} \\ 0 \end{pmatrix}, \qquad \boldsymbol{\mathcal{V}} = \begin{pmatrix} (\sigma + \mu)E \\ -\sigma E + (\gamma + \mu)I \end{pmatrix}$$</p>
+    <p style="margin-top:0.8rem; font-size:14px; color:var(--cream-dim);">
+      Note: The $E$ equation has a new infection term ($\beta SI/N$) in $\mathcal{F}_1$. The $I$ equation has <em>no</em> new infection — $\sigma E$ is just progression, so it goes in $\mathcal{V}$. The minus sign in $\mathcal{V}_2$ means $\sigma E$ is an outflow from $\mathcal{V}_E$ into $\mathcal{V}_I$.
+    </p>
+  </div>
+
+  <p><strong>Step 3 — Compute Jacobian matrices at DFE</strong> (where $S^* = N$):</p>
+  <div class="math-block">
+    $$\mathbf{F} = \begin{pmatrix} \frac{\partial \mathcal{F}_1}{\partial E} & \frac{\partial \mathcal{F}_1}{\partial I} \\ \frac{\partial \mathcal{F}_2}{\partial E} & \frac{\partial \mathcal{F}_2}{\partial I} \end{pmatrix}_{DFE} = \begin{pmatrix} 0 & \beta \\ 0 & 0 \end{pmatrix}$$
+  </div>
+  <div class="math-block">
+    $$\mathbf{V} = \begin{pmatrix} \frac{\partial \mathcal{V}_1}{\partial E} & \frac{\partial \mathcal{V}_1}{\partial I} \\ \frac{\partial \mathcal{V}_2}{\partial E} & \frac{\partial \mathcal{V}_2}{\partial I} \end{pmatrix}_{DFE} = \begin{pmatrix} \sigma + \mu & 0 \\ -\sigma & \gamma + \mu \end{pmatrix}$$
+  </div>
+
+  <p><strong>Step 4 — Compute $\mathbf{V}^{-1}$:</strong></p>
+  <p>For a $2 \times 2$ matrix $\begin{pmatrix}a & b \\ c & d\end{pmatrix}$, the inverse is $\dfrac{1}{ad-bc}\begin{pmatrix}d & -b \\ -c & a\end{pmatrix}$. Here:</p>
+  <div class="math-block">
+    $$\mathbf{V}^{-1} = \frac{1}{(\sigma+\mu)(\gamma+\mu)} \begin{pmatrix} \gamma+\mu & 0 \\ \sigma & \sigma+\mu \end{pmatrix}$$
+  </div>
+
+  <p><strong>Step 5 — Compute $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$:</strong></p>
+  <div class="math-block">
+    $$\mathbf{K} = \begin{pmatrix} 0 & \beta \\ 0 & 0 \end{pmatrix} \cdot \frac{1}{(\sigma+\mu)(\gamma+\mu)} \begin{pmatrix} \gamma+\mu & 0 \\ \sigma & \sigma+\mu \end{pmatrix} = \frac{1}{(\sigma+\mu)(\gamma+\mu)}\begin{pmatrix} \beta\sigma & \beta(\sigma+\mu) \\ 0 & 0 \end{pmatrix}$$
+  </div>
+
+  <p><strong>Step 6 — Spectral radius:</strong> Eigenvalues of $\mathbf{K}$ are found from $\det(\mathbf{K} - \lambda \mathbf{I}) = 0$. Since $\mathbf{K}$ is upper triangular, eigenvalues are the diagonal entries: $\lambda_1 = \frac{\beta\sigma}{(\sigma+\mu)(\gamma+\mu)}$ and $\lambda_2 = 0$. Therefore:</p>
+
+  <div class="math-block">
+    $$\boxed{R_0^{SEIR} = \frac{\beta\sigma}{(\sigma+\mu)(\gamma+\mu)}}$$
+  </div>
+
+  <div class="box box-insight">
+    <span class="box-title">Biological Interpretation of SEIR R₀</span>
+    <p>Compare to SIR: $R_0^{SIR} = \frac{\beta}{\gamma+\mu}$. In the SEIR formula, $\frac{\sigma}{\sigma+\mu}$ is the <em>probability of surviving the latent period</em> — the fraction of exposed individuals who actually make it to the infectious stage before dying naturally. So $R_0^{SEIR} = R_0^{SIR} \times P(\text{E survives to I})$. Adding an exposed class reduces $R_0$ slightly (because some people die before becoming infectious), but doesn't change the structure dramatically.</p>
+  </div>
+
+  <div class="box box-example">
+    <span class="box-title">Worked Example — SEIR for Pneumonia</span>
+    <p>Let $\beta = 0.4$ day⁻¹, $\sigma = 0.2$ day⁻¹ (5-day incubation), $\gamma = 0.14$ day⁻¹ (7-day infectious period), $\mu = 0.000027$ day⁻¹.</p>
+    <p>$$R_0 = \frac{0.4 \times 0.2}{(0.2 + 0.000027)(0.14 + 0.000027)} \approx \frac{0.08}{0.2 \times 0.14} = \frac{0.08}{0.028} \approx 2.86$$</p>
+    <p>The disease spreads — roughly 2.86 new cases per index case.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 6: SIS -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="sis">
+  <span class="section-number">Section 06</span>
+  <h2 class="section-title">The SIS Model — No Permanent Immunity</h2>
+
+  <p>Some diseases, like gonorrhoea or common cold strains, grant no long-term immunity. Recovered individuals return directly to the susceptible class. This is the SIS model.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg" style="max-width:400px;width:100%;">
+      <defs>
+        <marker id="arr-s1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c9a84c"/></marker>
+        <marker id="arr-s2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6aab72"/></marker>
+      </defs>
+      <!-- S -->
+      <rect x="40" y="55" width="110" height="50" rx="4" fill="#1a1711" stroke="#c9a84c" stroke-width="1.5"/>
+      <text x="95" y="77" text-anchor="middle" fill="#e2c47a" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">S</text>
+      <text x="95" y="94" text-anchor="middle" fill="#8a7f6a" font-size="10">Susceptible</text>
+      <!-- I -->
+      <rect x="250" y="55" width="110" height="50" rx="4" fill="#1a1711" stroke="#c0463c" stroke-width="1.5"/>
+      <text x="305" y="77" text-anchor="middle" fill="#e06060" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">I</text>
+      <text x="305" y="94" text-anchor="middle" fill="#8a7f6a" font-size="10">Infectious</text>
+      <!-- S→I top arrow -->
+      <path d="M 150 72 Q 200 40 250 72" fill="none" stroke="#c9a84c" stroke-width="1.5" marker-end="url(#arr-s1)"/>
+      <text x="200" y="38" text-anchor="middle" fill="#c9a84c" font-size="10" font-family="'JetBrains Mono',monospace">βSI/N</text>
+      <!-- I→S bottom arrow -->
+      <path d="M 250 88 Q 200 128 150 88" fill="none" stroke="#6aab72" stroke-width="1.5" marker-end="url(#arr-s2)"/>
+      <text x="200" y="140" text-anchor="middle" fill="#6aab72" font-size="10" font-family="'JetBrains Mono',monospace">γI (no immunity)</text>
+    </svg>
+    <div class="diagram-caption">Figure 3 — SIS model: recovery returns individuals directly to susceptible class</div>
+  </div>
+
+  <h3>System of ODEs</h3>
+  <div class="math-block">
+    $$\begin{aligned}
+    \dot{S} &= \Lambda + \gamma I - \frac{\beta S I}{N} - \mu S \\[6pt]
+    \dot{I} &= \frac{\beta S I}{N} - \gamma I - \mu I
+    \end{aligned}$$
+  </div>
+
+  <p>With one infected compartment $I$, the NGM is $1\times1$. The analysis is identical to SIR:</p>
+
+  <div class="math-block">
+    $$\boxed{R_0^{SIS} = \frac{\beta}{\gamma + \mu}}$$
+  </div>
+
+  <p>The same formula as SIR! This makes sense — $R_0$ describes the initial invasion of a disease into a fully susceptible population. The difference between SIS and SIR only becomes important long after the epidemic starts, for the endemic equilibrium.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 7: SIRS -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="sirs">
+  <span class="section-number">Section 07</span>
+  <h2 class="section-title">The SIRS Model — Waning Immunity</h2>
+
+  <p>A more realistic scenario: individuals gain immunity after infection, but it eventually wanes. They become susceptible again after some time. This is the SIRS model, relevant for COVID-19 and seasonal influenza.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 600 170" xmlns="http://www.w3.org/2000/svg" style="max-width:600px;width:100%;">
+      <defs>
+        <marker id="arr-r1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c9a84c"/></marker>
+        <marker id="arr-r2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6aab72"/></marker>
+        <marker id="arr-r3" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#9b72c0"/></marker>
+      </defs>
+      <!-- S -->
+      <rect x="20" y="60" width="100" height="50" rx="4" fill="#1a1711" stroke="#c9a84c" stroke-width="1.5"/>
+      <text x="70" y="82" text-anchor="middle" fill="#e2c47a" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">S</text>
+      <text x="70" y="99" text-anchor="middle" fill="#8a7f6a" font-size="10">Susceptible</text>
+      <!-- I -->
+      <rect x="240" y="60" width="100" height="50" rx="4" fill="#1a1711" stroke="#c0463c" stroke-width="1.5"/>
+      <text x="290" y="82" text-anchor="middle" fill="#e06060" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">I</text>
+      <text x="290" y="99" text-anchor="middle" fill="#8a7f6a" font-size="10">Infectious</text>
+      <!-- R -->
+      <rect x="460" y="60" width="100" height="50" rx="4" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="510" y="82" text-anchor="middle" fill="#6aab72" font-size="20" font-weight="bold" font-family="'Playfair Display',serif">R</text>
+      <text x="510" y="99" text-anchor="middle" fill="#8a7f6a" font-size="10">Recovered</text>
+      <!-- S→I -->
+      <line x1="120" y1="85" x2="238" y2="85" stroke="#c9a84c" stroke-width="1.5" marker-end="url(#arr-r1)"/>
+      <text x="179" y="75" text-anchor="middle" fill="#c9a84c" font-size="10" font-family="'JetBrains Mono',monospace">βSI/N</text>
+      <!-- I→R -->
+      <line x1="340" y1="85" x2="458" y2="85" stroke="#6aab72" stroke-width="1.5" marker-end="url(#arr-r2)"/>
+      <text x="399" y="75" text-anchor="middle" fill="#6aab72" font-size="10" font-family="'JetBrains Mono',monospace">γI</text>
+      <!-- R→S (waning immunity, curved below) -->
+      <path d="M 460 100 Q 290 155 120 100" fill="none" stroke="#9b72c0" stroke-width="1.5" marker-end="url(#arr-r3)"/>
+      <text x="290" y="160" text-anchor="middle" fill="#9b72c0" font-size="10" font-family="'JetBrains Mono',monospace">ωR  (waning immunity)</text>
+    </svg>
+    <div class="diagram-caption">Figure 4 — SIRS model: recovered individuals lose immunity at rate ω and return to susceptible class</div>
+  </div>
+
+  <h3>System of ODEs</h3>
+  <div class="math-block">
+    $$\begin{aligned}
+    \dot{S} &= \Lambda + \omega R - \frac{\beta S I}{N} - \mu S \\[6pt]
+    \dot{I} &= \frac{\beta S I}{N} - \gamma I - \mu I \\[6pt]
+    \dot{R} &= \gamma I - \omega R - \mu R
+    \end{aligned}$$
+  </div>
+
+  <p>The DFE is $S^* = \Lambda/\mu$, $I^* = 0$, $R^* = 0$. There is one infected compartment $I$. Following the NGM with $\mathcal{F} = \beta SI/N$ and $\mathcal{V} = (\gamma+\mu)I$:</p>
+
+  <div class="math-block">
+    $$\boxed{R_0^{SIRS} = \frac{\beta}{\gamma + \mu}}$$
+  </div>
+
+  <p>Same as SIR and SIS. The $\omega$ (waning immunity) term does not affect $R_0$ because at the DFE, $R^* = 0$, so waning immunity has no effect at the start of an epidemic. It does affect the endemic equilibrium and long-term dynamics, however.</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 8: CO-INFECTION INTRO -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="coinf-intro">
+  <span class="section-number">Section 08</span>
+  <h2 class="section-title">Introduction to Co-infection Models</h2>
+
+  <p>A <strong>co-infection</strong> occurs when a single host is simultaneously infected by two or more pathogens. This is medically common and epidemiologically important:</p>
+
+  <ul style="margin: 1rem 0 1rem 1.5rem; line-height: 2;">
+    <li>Pneumonia and influenza (influenza damages respiratory epithelium, facilitating bacterial pneumonia)</li>
+    <li>HIV and tuberculosis (HIV weakens the immune system, reactivating latent TB)</li>
+    <li>Malaria and anaemia</li>
+    <li>COVID-19 and fungal co-infections</li>
+  </ul>
+
+  <h3>Why Co-infection Models Are Harder</h3>
+  <p>In a single-disease model, a person is either susceptible, exposed, or infected with disease $A$. In a co-infection model, a person can be:</p>
+  <ul style="margin: 1rem 0 1rem 1.5rem; line-height: 2;">
+    <li>Susceptible to both diseases</li>
+    <li>Infected with disease $A$ only</li>
+    <li>Infected with disease $B$ only</li>
+    <li>Co-infected with both $A$ and $B$</li>
+    <li>Recovered from $A$ (immune to $A$ but not $B$)</li>
+    <li>... and many more combinations</li>
+  </ul>
+
+  <p>This leads to <strong>many more compartments</strong>, and the NGM becomes larger. For a co-infection model with $n$ infected compartments, the NGM is $n \times n$ and $R_0$ is the largest eigenvalue of the resulting matrix.</p>
+
+  <h3>Types of Interaction Between Pathogens</h3>
+  <table>
+    <tr><th>Interaction Type</th><th>Meaning</th><th>Effect on R₀</th></tr>
+    <tr><td>Synergistic</td><td>Each infection increases susceptibility to the other (e.g., flu + pneumonia)</td><td>Increases both R₀ values</td></tr>
+    <tr><td>Antagonistic</td><td>One infection reduces susceptibility to the other</td><td>Decreases one R₀</td></tr>
+    <tr><td>Independent</td><td>No interaction between pathogens</td><td>R₀ values factorize nicely</td></tr>
+    <tr><td>Cross-immunity</td><td>Immunity to one confers partial immunity to the other</td><td>Reduces invasion of second pathogen</td></tr>
+  </table>
+
+  <div class="box box-insight">
+    <span class="box-title">Key Insight: Multiple R₀ Values</span>
+    <p>In a co-infection model, we typically compute <strong>three reproduction numbers</strong>:
+    <br>• $R_0^A$ — R₀ of disease A invading a disease-free population
+    <br>• $R_0^B$ — R₀ of disease B invading a disease-free population
+    <br>• $R_0^{AB}$ — R₀ of the full system (both diseases invading together, or one invading when the other is endemic)
+    <br><br>The overall system $R_0 = \max(R_0^A, R_0^B)$ if diseases are independent. With interactions, the analysis is more complex.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 9: BASIC CO-INFECTION MODEL -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="basic-coinf">
+  <span class="section-number">Section 09</span>
+  <h2 class="section-title">Basic Co-infection Model — Two Diseases, No Latency</h2>
+
+  <p>Let us build the simplest co-infection model: two diseases ($A$ and $B$) with no exposed class, no disease-induced death, and constant population.</p>
+
+  <h3>Compartments (7 total)</h3>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg" style="max-width:700px;width:100%;">
+      <defs>
+        <marker id="bc1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c9a84c"/></marker>
+        <marker id="bc2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5b8fc9"/></marker>
+        <marker id="bc3" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d47c42"/></marker>
+        <marker id="bc4" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6aab72"/></marker>
+        <marker id="bc5" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#9b72c0"/></marker>
+        <marker id="bc6" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c0463c"/></marker>
+      </defs>
+      <!-- S (center top) -->
+      <rect x="275" y="20" width="120" height="50" rx="4" fill="#1a1711" stroke="#c9a84c" stroke-width="2"/>
+      <text x="335" y="43" text-anchor="middle" fill="#e2c47a" font-size="18" font-weight="bold" font-family="'Playfair Display',serif">S</text>
+      <text x="335" y="59" text-anchor="middle" fill="#8a7f6a" font-size="9">Susceptible (both)</text>
+
+      <!-- I_A (left) -->
+      <rect x="70" y="140" width="120" height="50" rx="4" fill="#1a1711" stroke="#5b8fc9" stroke-width="2"/>
+      <text x="130" y="163" text-anchor="middle" fill="#5b8fc9" font-size="18" font-weight="bold" font-family="'Playfair Display',serif">I_A</text>
+      <text x="130" y="180" text-anchor="middle" fill="#8a7f6a" font-size="9">Infected A only</text>
+
+      <!-- I_B (right) -->
+      <rect x="480" y="140" width="120" height="50" rx="4" fill="#1a1711" stroke="#d47c42" stroke-width="2"/>
+      <text x="540" y="163" text-anchor="middle" fill="#d47c42" font-size="18" font-weight="bold" font-family="'Playfair Display',serif">I_B</text>
+      <text x="540" y="180" text-anchor="middle" fill="#8a7f6a" font-size="9">Infected B only</text>
+
+      <!-- I_AB (center, below) -->
+      <rect x="275" y="250" width="120" height="50" rx="4" fill="#1a1711" stroke="#c0463c" stroke-width="2"/>
+      <text x="335" y="273" text-anchor="middle" fill="#e06060" font-size="18" font-weight="bold" font-family="'Playfair Display',serif">I_AB</text>
+      <text x="335" y="290" text-anchor="middle" fill="#8a7f6a" font-size="9">Co-infected (A &amp; B)</text>
+
+      <!-- R_A (left bottom) -->
+      <rect x="70" y="320" width="120" height="50" rx="4" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="130" y="343" text-anchor="middle" fill="#6aab72" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">R_A</text>
+      <text x="130" y="360" text-anchor="middle" fill="#8a7f6a" font-size="9">Recovered A</text>
+
+      <!-- R_B (right bottom) -->
+      <rect x="480" y="320" width="120" height="50" rx="4" fill="#1a1711" stroke="#9b72c0" stroke-width="1.5"/>
+      <text x="540" y="343" text-anchor="middle" fill="#9b72c0" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">R_B</text>
+      <text x="540" y="360" text-anchor="middle" fill="#8a7f6a" font-size="9">Recovered B</text>
+
+      <!-- S → I_A -->
+      <line x1="290" y1="55" x2="185" y2="148" stroke="#5b8fc9" stroke-width="1.5" marker-end="url(#bc2)"/>
+      <text x="215" y="95" text-anchor="middle" fill="#5b8fc9" font-size="9" font-family="'JetBrains Mono',monospace">β_A·S·I_A/N</text>
+
+      <!-- S → I_B -->
+      <line x1="380" y1="55" x2="495" y2="148" stroke="#d47c42" stroke-width="1.5" marker-end="url(#bc3)"/>
+      <text x="460" y="95" text-anchor="middle" fill="#d47c42" font-size="9" font-family="'JetBrains Mono',monospace">β_B·S·I_B/N</text>
+
+      <!-- I_A → I_AB (acquires B) -->
+      <line x1="190" y1="175" x2="275" y2="265" stroke="#c0463c" stroke-width="1.5" marker-end="url(#bc6)"/>
+      <text x="200" y="232" text-anchor="middle" fill="#c0463c" font-size="9" font-family="'JetBrains Mono',monospace">β̃_B·I_A·I_B/N</text>
+
+      <!-- I_B → I_AB (acquires A) -->
+      <line x1="480" y1="175" x2="395" y2="265" stroke="#c0463c" stroke-width="1.5" marker-end="url(#bc6)"/>
+      <text x="468" y="232" text-anchor="middle" fill="#c0463c" font-size="9" font-family="'JetBrains Mono',monospace">β̃_A·I_B·I_A/N</text>
+
+      <!-- I_A → R_A -->
+      <line x1="130" y1="190" x2="130" y2="318" stroke="#6aab72" stroke-width="1.2" marker-end="url(#bc4)"/>
+      <text x="105" y="260" text-anchor="middle" fill="#6aab72" font-size="9" font-family="'JetBrains Mono',monospace">γ_A I_A</text>
+
+      <!-- I_B → R_B -->
+      <line x1="540" y1="190" x2="540" y2="318" stroke="#9b72c0" stroke-width="1.2" marker-end="url(#bc5)"/>
+      <text x="566" y="260" text-anchor="middle" fill="#9b72c0" font-size="9" font-family="'JetBrains Mono',monospace">γ_B I_B</text>
+    </svg>
+    <div class="diagram-caption">Figure 5 — Basic co-infection model. Singly-infected individuals can acquire the second pathogen, entering the co-infected class I_AB. $\tilde{\beta}$ values may differ from $\beta$ due to biological interaction effects.</div>
+  </div>
+
+  <h3>System of ODEs</h3>
+  <div class="math-block">
+    $$\begin{aligned}
+    \dot{S} &= \Lambda - \frac{\beta_A S I_A}{N} - \frac{\beta_B S I_B}{N} - \mu S \\[6pt]
+    \dot{I}_A &= \frac{\beta_A S I_A}{N} - \frac{\tilde{\beta}_B I_A I_B}{N} - (\gamma_A + \mu) I_A \\[6pt]
+    \dot{I}_B &= \frac{\beta_B S I_B}{N} - \frac{\tilde{\beta}_A I_B I_A}{N} - (\gamma_B + \mu) I_B \\[6pt]
+    \dot{I}_{AB} &= \frac{\tilde{\beta}_B I_A I_B}{N} + \frac{\tilde{\beta}_A I_B I_A}{N} - (\gamma_{AB} + \mu)I_{AB} \\[6pt]
+    \dot{R}_A &= \gamma_A I_A - \mu R_A \\[6pt]
+    \dot{R}_B &= \gamma_B I_B - \mu R_B
+    \end{aligned}$$
+  </div>
+
+  <p>where $\tilde{\beta}_B$ is the rate at which $A$-infected individuals acquire $B$, and $\tilde{\beta}_A$ is the rate at which $B$-infected individuals acquire $A$. These may be larger or smaller than $\beta_A, \beta_B$ depending on whether infection facilitates or inhibits co-infection.</p>
+
+  <h3>Computing R₀ via NGM</h3>
+
+  <p>The infected compartments are: $I_A$, $I_B$, and $I_{AB}$. So the NGM is $3 \times 3$.</p>
+
+  <p><strong>DFE:</strong> $S^* = \Lambda/\mu$, all infected classes $= 0$.</p>
+
+  <div class="box box-method">
+    <span class="box-title">Decomposition — Critical Step</span>
+    <p>At the DFE, all infected classes are zero. Therefore, any term involving a product of two infected compartments (like $I_A \cdot I_B$) evaluates to zero at the DFE and contributes zero to $\mathbf{F}$ and $\mathbf{V}$.</p>
+    <p style="margin-top:0.7rem;">New infection terms at DFE: Only $\beta_A S I_A / N$ and $\beta_B S I_B / N$ survive (since $S^* = N$).</p>
+  </div>
+
+  <div class="math-block">
+    $$\mathbf{F} = \begin{pmatrix} \beta_A & 0 & 0 \\ 0 & \beta_B & 0 \\ 0 & 0 & 0 \end{pmatrix}, \qquad \mathbf{V} = \begin{pmatrix} \gamma_A + \mu & 0 & 0 \\ 0 & \gamma_B + \mu & 0 \\ 0 & 0 & \gamma_{AB} + \mu \end{pmatrix}$$
+  </div>
+
+  <p>Since $\mathbf{V}$ is diagonal, $\mathbf{V}^{-1}$ is also diagonal with reciprocals on the diagonal:</p>
+
+  <div class="math-block">
+    $$\mathbf{K} = \mathbf{F}\mathbf{V}^{-1} = \begin{pmatrix} \frac{\beta_A}{\gamma_A+\mu} & 0 & 0 \\ 0 & \frac{\beta_B}{\gamma_B+\mu} & 0 \\ 0 & 0 & 0 \end{pmatrix}$$
+  </div>
+
+  <p>The eigenvalues are $\frac{\beta_A}{\gamma_A+\mu}$, $\frac{\beta_B}{\gamma_B+\mu}$, and $0$. The spectral radius is the largest:</p>
+
+  <div class="math-block">
+    $$\boxed{R_0 = \max\!\left(\frac{\beta_A}{\gamma_A+\mu},\ \frac{\beta_B}{\gamma_B+\mu}\right) = \max(R_0^A,\ R_0^B)}$$
+  </div>
+
+  <div class="box box-insight">
+    <span class="box-title">Why does co-infection not appear in R₀?</span>
+    <p>The co-infection terms ($I_A \cdot I_B$) are products of two small quantities near the DFE, so they vanish in the linearisation. $R_0$ describes early epidemic behaviour when all infected classes are near zero — co-infection interactions only matter <em>later</em> in the epidemic. This is why the basic co-infection R₀ simply equals the maximum of the two individual R₀ values, regardless of interaction parameters.</p>
+    <p style="margin-top:0.5rem;">However, if one disease is already <em>endemic</em> when the second invades, the analysis is different — we must use invasion reproduction numbers.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 10: SEIR CO-INFECTION -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="seir-coinf">
+  <span class="section-number">Section 10</span>
+  <h2 class="section-title">SEIR Co-infection Model</h2>
+
+  <p>Now we add exposed classes for both diseases. This increases the number of infected compartments significantly.</p>
+
+  <h3>Compartments (9 compartments)</h3>
+
+  <p>$S$ — susceptible to both; $E_A, E_B$ — exposed to disease A or B only; $I_A, I_B$ — infectious with A or B only; $E_{AB}$ — exposed to both (co-exposed); $I_{AB}$ — co-infected; $R_A, R_B$ — recovered from A or B.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" style="max-width:760px;width:100%;">
+      <defs>
+        <marker id="se1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c9a84c"/></marker>
+        <marker id="se2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#5b8fc9"/></marker>
+        <marker id="se3" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d47c42"/></marker>
+        <marker id="se4" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6aab72"/></marker>
+        <marker id="se5" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c0463c"/></marker>
+      </defs>
+      <!-- Row 1: S -->
+      <rect x="310" y="15" width="110" height="45" rx="4" fill="#1a1711" stroke="#c9a84c" stroke-width="2"/>
+      <text x="365" y="35" text-anchor="middle" fill="#e2c47a" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">S</text>
+      <text x="365" y="50" text-anchor="middle" fill="#8a7f6a" font-size="9">Susceptible</text>
+
+      <!-- Row 2: E_A, E_B -->
+      <rect x="90" y="105" width="105" height="45" rx="4" fill="#1a1711" stroke="#5b8fc9" stroke-width="1.5"/>
+      <text x="142" y="125" text-anchor="middle" fill="#5b8fc9" font-size="15" font-weight="bold" font-family="'Playfair Display',serif">E_A</text>
+      <text x="142" y="141" text-anchor="middle" fill="#8a7f6a" font-size="9">Exposed A</text>
+
+      <rect x="535" y="105" width="105" height="45" rx="4" fill="#1a1711" stroke="#d47c42" stroke-width="1.5"/>
+      <text x="587" y="125" text-anchor="middle" fill="#d47c42" font-size="15" font-weight="bold" font-family="'Playfair Display',serif">E_B</text>
+      <text x="587" y="141" text-anchor="middle" fill="#8a7f6a" font-size="9">Exposed B</text>
+
+      <!-- Row 3: I_A, E_AB, I_B -->
+      <rect x="90" y="210" width="105" height="45" rx="4" fill="#1a1711" stroke="#5b8fc9" stroke-width="1.5"/>
+      <text x="142" y="230" text-anchor="middle" fill="#5b8fc9" font-size="15" font-weight="bold" font-family="'Playfair Display',serif">I_A</text>
+      <text x="142" y="246" text-anchor="middle" fill="#8a7f6a" font-size="9">Infectious A</text>
+
+      <rect x="310" y="210" width="110" height="45" rx="4" fill="#1a1711" stroke="#9b72c0" stroke-width="1.5"/>
+      <text x="365" y="230" text-anchor="middle" fill="#9b72c0" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">E_AB</text>
+      <text x="365" y="246" text-anchor="middle" fill="#8a7f6a" font-size="9">Co-exposed</text>
+
+      <rect x="535" y="210" width="105" height="45" rx="4" fill="#1a1711" stroke="#d47c42" stroke-width="1.5"/>
+      <text x="587" y="230" text-anchor="middle" fill="#d47c42" font-size="15" font-weight="bold" font-family="'Playfair Display',serif">I_B</text>
+      <text x="587" y="246" text-anchor="middle" fill="#8a7f6a" font-size="9">Infectious B</text>
+
+      <!-- Row 4: R_A, I_AB, R_B -->
+      <rect x="90" y="330" width="105" height="45" rx="4" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="142" y="350" text-anchor="middle" fill="#6aab72" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">R_A</text>
+      <text x="142" y="366" text-anchor="middle" fill="#8a7f6a" font-size="9">Recovered A</text>
+
+      <rect x="310" y="330" width="110" height="45" rx="4" fill="#1a1711" stroke="#c0463c" stroke-width="2"/>
+      <text x="365" y="350" text-anchor="middle" fill="#e06060" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">I_AB</text>
+      <text x="365" y="366" text-anchor="middle" fill="#8a7f6a" font-size="9">Co-infected</text>
+
+      <rect x="535" y="330" width="105" height="45" rx="4" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="587" y="350" text-anchor="middle" fill="#6aab72" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">R_B</text>
+      <text x="587" y="366" text-anchor="middle" fill="#8a7f6a" font-size="9">Recovered B</text>
+
+      <!-- Arrows S → E_A -->
+      <line x1="330" y1="45" x2="190" y2="110" stroke="#5b8fc9" stroke-width="1.3" marker-end="url(#se2)"/>
+      <text x="235" y="70" text-anchor="middle" fill="#5b8fc9" font-size="8.5" font-family="'JetBrains Mono',monospace">β_A SI_A/N</text>
+
+      <!-- S → E_B -->
+      <line x1="400" y1="45" x2="545" y2="110" stroke="#d47c42" stroke-width="1.3" marker-end="url(#se3)"/>
+      <text x="495" y="70" text-anchor="middle" fill="#d47c42" font-size="8.5" font-family="'JetBrains Mono',monospace">β_B SI_B/N</text>
+
+      <!-- E_A → I_A -->
+      <line x1="142" y1="150" x2="142" y2="208" stroke="#5b8fc9" stroke-width="1.2" marker-end="url(#se2)"/>
+      <text x="112" y="182" text-anchor="middle" fill="#5b8fc9" font-size="8.5" font-family="'JetBrains Mono',monospace">σ_A E_A</text>
+
+      <!-- E_B → I_B -->
+      <line x1="587" y1="150" x2="587" y2="208" stroke="#d47c42" stroke-width="1.2" marker-end="url(#se3)"/>
+      <text x="617" y="182" text-anchor="middle" fill="#d47c42" font-size="8.5" font-family="'JetBrains Mono',monospace">σ_B E_B</text>
+
+      <!-- I_A → E_AB -->
+      <line x1="195" y1="232" x2="308" y2="232" stroke="#9b72c0" stroke-width="1.2" marker-end="url(#se1)"/>
+      <text x="251" y="223" text-anchor="middle" fill="#9b72c0" font-size="8" font-family="'JetBrains Mono',monospace">β̃_B I_A I_B/N</text>
+
+      <!-- I_B → E_AB -->
+      <line x1="535" y1="232" x2="422" y2="232" stroke="#9b72c0" stroke-width="1.2" marker-end="url(#se1)"/>
+      <text x="478" y="223" text-anchor="middle" fill="#9b72c0" font-size="8" font-family="'JetBrains Mono',monospace">β̃_A I_B I_A/N</text>
+
+      <!-- E_AB → I_AB -->
+      <line x1="365" y1="255" x2="365" y2="328" stroke="#c0463c" stroke-width="1.2" marker-end="url(#se5)"/>
+      <text x="385" y="295" text-anchor="start" fill="#c0463c" font-size="8.5" font-family="'JetBrains Mono',monospace">σ_{AB}</text>
+
+      <!-- I_A → R_A -->
+      <line x1="142" y1="255" x2="142" y2="328" stroke="#6aab72" stroke-width="1.2" marker-end="url(#se4)"/>
+      <text x="112" y="295" text-anchor="middle" fill="#6aab72" font-size="8.5" font-family="'JetBrains Mono',monospace">γ_A I_A</text>
+
+      <!-- I_B → R_B -->
+      <line x1="587" y1="255" x2="587" y2="328" stroke="#6aab72" stroke-width="1.2" marker-end="url(#se4)"/>
+      <text x="617" y="295" text-anchor="middle" fill="#6aab72" font-size="8.5" font-family="'JetBrains Mono',monospace">γ_B I_B</text>
+    </svg>
+    <div class="diagram-caption">Figure 6 — SEIR co-infection model with 9 compartments. Each disease has its own exposed and infectious class, with a shared co-exposed (E_AB) and co-infected (I_AB) class.</div>
+  </div>
+
+  <h3>R₀ for the SEIR Co-infection Model</h3>
+
+  <p>The infected compartments are: $E_A, I_A, E_B, I_B, E_{AB}, I_{AB}$ — that is 6 infected compartments, giving a $6 \times 6$ NGM. However, at the DFE, the cross-infection terms (involving products of infected classes) vanish.</p>
+
+  <p>The $\mathbf{F}$ matrix at the DFE contains only:</p>
+  <div class="math-block">
+    $$\mathbf{F} = \begin{pmatrix} 0 & \beta_A & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & \beta_B & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \end{pmatrix}$$
+  </div>
+  <p style="font-size:13px;color:var(--text-dim);">(ordering: $E_A, I_A, E_B, I_B, E_{AB}, I_{AB}$)</p>
+
+  <p>The $\mathbf{V}$ matrix captures within-disease progressions:</p>
+  <div class="math-block">
+    $$\mathbf{V} = \begin{pmatrix} \sigma_A+\mu & 0 & 0 & 0 & 0 & 0 \\ -\sigma_A & \gamma_A+\mu & 0 & 0 & 0 & 0 \\ 0 & 0 & \sigma_B+\mu & 0 & 0 & 0 \\ 0 & 0 & -\sigma_B & \gamma_B+\mu & 0 & 0 \\ 0 & 0 & 0 & 0 & \sigma_{AB}+\mu & 0 \\ 0 & 0 & 0 & 0 & -\sigma_{AB} & \gamma_{AB}+\mu \end{pmatrix}$$
+  </div>
+
+  <p>Because $\mathbf{F}$ is block diagonal and the $E_{AB}, I_{AB}$ rows of $\mathbf{F}$ are all zero, the NGM $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$ decouples into two independent $2\times2$ blocks (one for disease A, one for disease B), plus a zero block for co-infection. The eigenvalues are exactly those of the two SEIR blocks:</p>
+
+  <div class="math-block">
+    $$\boxed{R_0^{SEIR\text{-}coinf} = \max\!\left(\frac{\beta_A \sigma_A}{(\sigma_A+\mu)(\gamma_A+\mu)},\ \frac{\beta_B \sigma_B}{(\sigma_B+\mu)(\gamma_B+\mu)}\right)}$$
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 11: COMPLEX SINGLE-DISEASE -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="complex">
+  <span class="section-number">Section 11</span>
+  <h2 class="section-title">Complex Single-Disease Models — Treatment &amp; Multiple Stages</h2>
+
+  <p>Real-world models often include additional compartments: treatment stages, age structure, vaccination, hospitalization, etc. Let us work through an SEIRT model (adding a <strong>Treatment</strong> class $T$), which is common for pneumonia models.</p>
+
+  <h3>SEIRT Model — Compartments</h3>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 760 180" xmlns="http://www.w3.org/2000/svg" style="max-width:760px;width:100%;">
+      <defs>
+        <marker id="st1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c9a84c"/></marker>
+        <marker id="st2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#d47c42"/></marker>
+        <marker id="st3" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c0463c"/></marker>
+        <marker id="st4" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4a9e96"/></marker>
+        <marker id="st5" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#6aab72"/></marker>
+      </defs>
+      <!-- S -->
+      <rect x="10" y="65" width="90" height="50" rx="4" fill="#1a1711" stroke="#c9a84c" stroke-width="1.5"/>
+      <text x="55" y="87" text-anchor="middle" fill="#e2c47a" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">S</text>
+      <text x="55" y="104" text-anchor="middle" fill="#8a7f6a" font-size="9">Susceptible</text>
+      <!-- E -->
+      <rect x="150" y="65" width="90" height="50" rx="4" fill="#1a1711" stroke="#d47c42" stroke-width="1.5"/>
+      <text x="195" y="87" text-anchor="middle" fill="#d47c42" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">E</text>
+      <text x="195" y="104" text-anchor="middle" fill="#8a7f6a" font-size="9">Exposed</text>
+      <!-- I -->
+      <rect x="290" y="65" width="90" height="50" rx="4" fill="#1a1711" stroke="#c0463c" stroke-width="1.5"/>
+      <text x="335" y="87" text-anchor="middle" fill="#e06060" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">I</text>
+      <text x="335" y="104" text-anchor="middle" fill="#8a7f6a" font-size="9">Infectious</text>
+      <!-- T -->
+      <rect x="430" y="65" width="90" height="50" rx="4" fill="#1a1711" stroke="#4a9e96" stroke-width="1.5"/>
+      <text x="475" y="87" text-anchor="middle" fill="#4a9e96" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">T</text>
+      <text x="475" y="104" text-anchor="middle" fill="#8a7f6a" font-size="9">Treatment</text>
+      <!-- R -->
+      <rect x="570" y="65" width="90" height="50" rx="4" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="615" y="87" text-anchor="middle" fill="#6aab72" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">R</text>
+      <text x="615" y="104" text-anchor="middle" fill="#8a7f6a" font-size="9">Recovered</text>
+      <!-- Arrows -->
+      <line x1="100" y1="90" x2="148" y2="90" stroke="#c9a84c" stroke-width="1.3" marker-end="url(#st1)"/>
+      <text x="124" y="80" text-anchor="middle" fill="#c9a84c" font-size="8.5" font-family="'JetBrains Mono',monospace">βSI/N</text>
+      <line x1="240" y1="90" x2="288" y2="90" stroke="#d47c42" stroke-width="1.3" marker-end="url(#st2)"/>
+      <text x="264" y="80" text-anchor="middle" fill="#d47c42" font-size="8.5" font-family="'JetBrains Mono',monospace">σE</text>
+      <line x1="380" y1="90" x2="428" y2="90" stroke="#c0463c" stroke-width="1.3" marker-end="url(#st3)"/>
+      <text x="404" y="80" text-anchor="middle" fill="#c0463c" font-size="8.5" font-family="'JetBrains Mono',monospace">τI</text>
+      <line x1="520" y1="90" x2="568" y2="90" stroke="#4a9e96" stroke-width="1.3" marker-end="url(#st4)"/>
+      <text x="544" y="80" text-anchor="middle" fill="#4a9e96" font-size="8.5" font-family="'JetBrains Mono',monospace">γ_T T</text>
+      <!-- I → R direct (bypass T, underneath) -->
+      <path d="M335 115 Q475 155 615 115" fill="none" stroke="#6aab72" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#st5)"/>
+      <text x="475" y="162" text-anchor="middle" fill="#6aab72" font-size="8.5" font-family="'JetBrains Mono',monospace">(1-ρ)γI — recover without treatment</text>
+    </svg>
+    <div class="diagram-caption">Figure 7 — SEIRT model. A fraction ρ of infectious individuals enter treatment T, the remainder recover directly. Treatment reduces infectivity.</div>
+  </div>
+
+  <h3>System of ODEs</h3>
+  <div class="math-block">
+    $$\begin{aligned}
+    \dot{S} &= \Lambda - \frac{\beta S (I + \epsilon T)}{N} - \mu S \\[6pt]
+    \dot{E} &= \frac{\beta S (I + \epsilon T)}{N} - (\sigma + \mu) E \\[6pt]
+    \dot{I} &= \sigma E - (\tau + \gamma + \mu + \delta) I \\[6pt]
+    \dot{T} &= \tau I - (\gamma_T + \mu) T \\[6pt]
+    \dot{R} &= \gamma I + \gamma_T T - \mu R
+    \end{aligned}$$
+  </div>
+
+  <p>Here $\epsilon \in [0,1]$ is the relative infectivity of treated individuals (treatment reduces infectivity), $\tau$ is the treatment rate, $\delta$ is disease-induced mortality, and $\gamma_T$ is the recovery rate while on treatment.</p>
+
+  <h3>NGM for SEIRT</h3>
+
+  <p>Infected compartments: $E, I, T$ (three compartments). The new infection force involves both $I$ and $T$.</p>
+
+  <div class="math-block">
+    $$\boldsymbol{\mathcal{F}} = \begin{pmatrix} \frac{\beta S (I + \epsilon T)}{N} \\ 0 \\ 0 \end{pmatrix}, \quad \boldsymbol{\mathcal{V}} = \begin{pmatrix} (\sigma+\mu)E \\ -\sigma E + (k_I)I \\ -\tau I + (\gamma_T+\mu)T \end{pmatrix}$$
+  </div>
+  <p style="font-size:13px;color:var(--text-dim);">where $k_I = \tau + \gamma + \mu + \delta$.</p>
+
+  <div class="math-block">
+    $$\mathbf{F} = \begin{pmatrix} 0 & \beta & \beta\epsilon \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{pmatrix}, \quad \mathbf{V} = \begin{pmatrix} \sigma+\mu & 0 & 0 \\ -\sigma & k_I & 0 \\ 0 & -\tau & \gamma_T+\mu \end{pmatrix}$$
+  </div>
+
+  <p>Computing $\mathbf{V}^{-1}$ for a lower triangular $3 \times 3$ matrix (entries below diagonal only, zeros above):</p>
+
+  <div class="math-block">
+    $$\mathbf{V}^{-1} = \begin{pmatrix} \frac{1}{\sigma+\mu} & 0 & 0 \\ \frac{\sigma}{(\sigma+\mu)k_I} & \frac{1}{k_I} & 0 \\ \frac{\sigma\tau}{(\sigma+\mu)k_I(\gamma_T+\mu)} & \frac{\tau}{k_I(\gamma_T+\mu)} & \frac{1}{\gamma_T+\mu} \end{pmatrix}$$
+  </div>
+
+  <p>Then $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$. The only non-zero row is the first row of $\mathbf{K}$:</p>
+
+  <div class="math-block">
+    $$K_{11} = \frac{\beta\sigma}{(\sigma+\mu)k_I}, \quad K_{12} = \frac{\beta}{k_I} + \frac{\beta\epsilon\tau}{k_I(\gamma_T+\mu)}, \quad K_{13} = \frac{\beta\epsilon}{\gamma_T+\mu}$$
+  </div>
+
+  <p>Since all other rows of $\mathbf{K}$ are zero, the only non-zero eigenvalue is the sum along the first row when factoring the entry structure. After simplification:</p>
+
+  <div class="math-block">
+    $$\boxed{R_0^{SEIRT} = \frac{\beta\sigma}{(\sigma+\mu)k_I}\left[1 + \frac{\epsilon\tau}{\gamma_T+\mu}\right]}$$
+  </div>
+
+  <p>where $k_I = \tau + \gamma + \mu + \delta$. Notice that if $\epsilon = 0$ (treated individuals are not infectious at all) and $\tau = 0$ (no treatment), this reduces to the SEIR formula.</p>
+
+  <div class="box box-example">
+    <span class="box-title">Interpretation</span>
+    <p>The term in brackets $\left[1 + \frac{\epsilon\tau}{\gamma_T+\mu}\right]$ accounts for the additional transmission from treated individuals. If $\epsilon = 0$ (perfect isolation during treatment), $R_0$ reduces to the SEIR formula. If $\tau \to 0$ (no treatment), same result. Treatment helps reduce $R_0$ by moving $\tau$ from the denominator factor $k_I$ (increasing it), and reducing $\epsilon$ diminishes the bracket term.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 12: COMPLEX CO-INFECTION R0 -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="complex-coinf">
+  <span class="section-number">Section 12</span>
+  <h2 class="section-title">Complex Co-infection Models — General Framework</h2>
+
+  <p>When we combine SEIR-type dynamics with treatment, co-infection, and disease interaction, models can have 8–15 compartments. The NGM approach scales naturally, but the algebra becomes substantial. Here is the systematic framework.</p>
+
+  <h3>General Strategy for Any Complex Co-infection Model</h3>
+  <ol class="steps">
+    <li><strong>List all compartments</strong>. Label them clearly. Identify which are infected (any compartment where the disease state is active — exposed, infectious, treated-while-infectious, etc.).</li>
+    <li><strong>Write all ODEs</strong>. Be careful about which terms appear where — especially for co-infected classes that can receive infections from multiple sources.</li>
+    <li><strong>Find DFE</strong>. Set all infected compartments to zero. In co-infection models, there are typically multiple DFEs: (1) fully disease-free ($I_A = I_B = 0$), (2) boundary equilibria (only one disease present). Compute $R_0$ at the fully disease-free equilibrium.</li>
+    <li><strong>Identify $n$ infected compartments</strong>. Construct $\mathcal{F}$ and $\mathcal{V}$ vectors.</li>
+    <li><strong>At DFE, linearise</strong>. Products of infected classes vanish. Only linear terms in infected classes survive in $\mathbf{F}$.</li>
+    <li><strong>Compute $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$</strong>. For large matrices, this may require a computer algebra system (e.g., Mathematica, SymPy, MATLAB).</li>
+    <li><strong>Find largest eigenvalue</strong> of $\mathbf{K}$. For $2\times2$ matrices: $\lambda = \frac{\text{tr}(\mathbf{K}) \pm \sqrt{\text{tr}(\mathbf{K})^2 - 4\det(\mathbf{K})}}{2}$. For larger matrices: use the characteristic polynomial or numerical methods.</li>
+  </ol>
+
+  <h3>Invasion Reproduction Numbers</h3>
+
+  <p>In co-infection models, we often want to know: if disease $A$ is already endemic, can disease $B$ invade? This uses the <strong>invasion reproduction number</strong> $\mathcal{R}_B^A$:</p>
+
+  <div class="box box-definition">
+    <span class="box-title">Invasion Reproduction Number</span>
+    <p>$\mathcal{R}_B^A$ is the reproduction number of disease $B$ computed not at the fully disease-free equilibrium, but at the <em>boundary equilibrium</em> where disease $A$ is endemic and disease $B$ is absent.</p>
+    <p style="margin-top:0.7rem;">If $\mathcal{R}_B^A > 1$: disease $B$ can invade even when $A$ is already circulating.</p>
+    <p>If $\mathcal{R}_B^A < 1$: the existing prevalence of $A$ prevents $B$ from spreading (competitive exclusion or immune cross-protection).</p>
+  </div>
+
+  <h3>Co-existence vs. Competitive Exclusion</h3>
+  <table>
+    <tr><th>Condition</th><th>Outcome</th></tr>
+    <tr><td>$R_0^A > 1$, $R_0^B < 1$</td><td>Only disease A is endemic</td></tr>
+    <tr><td>$R_0^A < 1$, $R_0^B > 1$</td><td>Only disease B is endemic</td></tr>
+    <tr><td>$R_0^A > 1$, $R_0^B > 1$, $\mathcal{R}_A^B > 1$, $\mathcal{R}_B^A > 1$</td><td>Both diseases co-exist (co-infection endemic)</td></tr>
+    <tr><td>$R_0^A > 1$, $R_0^B > 1$, $\mathcal{R}_A^B < 1$ or $\mathcal{R}_B^A < 1$</td><td>Competitive exclusion — one disease eliminates the other</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 13: PNEUMONIA-INFLUENZA -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="pneu-flu">
+  <span class="section-number">Section 13</span>
+  <h2 class="section-title">Application: Pneumonia–Influenza Co-infection Model (11 Compartments)</h2>
+
+  <p>We now apply everything to a realistic 11-compartment model for co-infection with pneumonia (P) and influenza (I). This structure is commonly used in the literature (e.g., Wangari et al., Mwangi et al.).</p>
+
+  <h3>The 11 Compartments</h3>
+
+  <table>
+    <tr><th>Compartment</th><th>Symbol</th><th>Description</th></tr>
+    <tr><td>Susceptible</td><td>$S$</td><td>Healthy individuals susceptible to both diseases</td></tr>
+    <tr><td>Exposed to Pneumonia</td><td>$E_P$</td><td>Latently infected with pneumonia, not yet infectious</td></tr>
+    <tr><td>Exposed to Influenza</td><td>$E_I$</td><td>Latently infected with influenza, not yet infectious</td></tr>
+    <tr><td>Infectious with Pneumonia</td><td>$I_P$</td><td>Actively infectious with pneumonia only</td></tr>
+    <tr><td>Infectious with Influenza</td><td>$I_I$</td><td>Actively infectious with influenza only</td></tr>
+    <tr><td>Treatment for Pneumonia</td><td>$T_P$</td><td>Under antibiotic treatment for pneumonia</td></tr>
+    <tr><td>Treatment for Influenza</td><td>$T_I$</td><td>Under antiviral treatment for influenza</td></tr>
+    <tr><td>Co-infected</td><td>$I_{PI}$</td><td>Simultaneously infected with both pneumonia and influenza</td></tr>
+    <tr><td>Recovered from Pneumonia</td><td>$R_P$</td><td>Cleared pneumonia; may still be susceptible to influenza</td></tr>
+    <tr><td>Recovered from Influenza</td><td>$R_I$</td><td>Cleared influenza; may still be susceptible to pneumonia</td></tr>
+    <tr><td>Fully Recovered</td><td>$R$</td><td>Cleared both diseases</td></tr>
+  </table>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 800 530" xmlns="http://www.w3.org/2000/svg" style="max-width:800px;width:100%;">
+      <defs>
+        <marker id="p1" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#c9a84c"/></marker>
+        <marker id="p2" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#5b8fc9"/></marker>
+        <marker id="p3" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#d47c42"/></marker>
+        <marker id="p4" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#4a9e96"/></marker>
+        <marker id="p5" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#6aab72"/></marker>
+        <marker id="p6" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#c0463c"/></marker>
+        <marker id="p7" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#9b72c0"/></marker>
+      </defs>
+
+      <!-- ROW 1: S centered -->
+      <rect x="330" y="10" width="100" height="45" rx="3" fill="#1a1711" stroke="#c9a84c" stroke-width="2"/>
+      <text x="380" y="30" text-anchor="middle" fill="#e2c47a" font-size="16" font-weight="bold" font-family="'Playfair Display',serif">S</text>
+      <text x="380" y="46" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Susceptible</text>
+
+      <!-- ROW 2: E_P (left), E_I (right) -->
+      <rect x="80" y="100" width="100" height="45" rx="3" fill="#1a1711" stroke="#5b8fc9" stroke-width="1.5"/>
+      <text x="130" y="120" text-anchor="middle" fill="#5b8fc9" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">E_P</text>
+      <text x="130" y="136" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Exposed Pneumonia</text>
+
+      <rect x="580" y="100" width="100" height="45" rx="3" fill="#1a1711" stroke="#d47c42" stroke-width="1.5"/>
+      <text x="630" y="120" text-anchor="middle" fill="#d47c42" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">E_I</text>
+      <text x="630" y="136" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Exposed Influenza</text>
+
+      <!-- ROW 3: I_P, I_PI (center), I_I -->
+      <rect x="80" y="210" width="100" height="45" rx="3" fill="#1a1711" stroke="#5b8fc9" stroke-width="1.5"/>
+      <text x="130" y="230" text-anchor="middle" fill="#5b8fc9" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">I_P</text>
+      <text x="130" y="246" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Infectious Pneum.</text>
+
+      <rect x="320" y="210" width="120" height="45" rx="3" fill="#1a1711" stroke="#c0463c" stroke-width="2"/>
+      <text x="380" y="230" text-anchor="middle" fill="#e06060" font-size="13" font-weight="bold" font-family="'Playfair Display',serif">I_{PI}</text>
+      <text x="380" y="246" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Co-infected</text>
+
+      <rect x="580" y="210" width="100" height="45" rx="3" fill="#1a1711" stroke="#d47c42" stroke-width="1.5"/>
+      <text x="630" y="230" text-anchor="middle" fill="#d47c42" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">I_I</text>
+      <text x="630" y="246" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Infectious Influ.</text>
+
+      <!-- ROW 4: T_P, T_I -->
+      <rect x="80" y="320" width="100" height="45" rx="3" fill="#1a1711" stroke="#4a9e96" stroke-width="1.5"/>
+      <text x="130" y="340" text-anchor="middle" fill="#4a9e96" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">T_P</text>
+      <text x="130" y="356" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Treatment Pneum.</text>
+
+      <rect x="580" y="320" width="100" height="45" rx="3" fill="#1a1711" stroke="#4a9e96" stroke-width="1.5"/>
+      <text x="630" y="340" text-anchor="middle" fill="#4a9e96" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">T_I</text>
+      <text x="630" y="356" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Treatment Influ.</text>
+
+      <!-- ROW 5: R_P, R (center), R_I -->
+      <rect x="80" y="430" width="100" height="45" rx="3" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="130" y="450" text-anchor="middle" fill="#6aab72" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">R_P</text>
+      <text x="130" y="466" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Recovered Pneum.</text>
+
+      <rect x="330" y="430" width="100" height="45" rx="3" fill="#1a1711" stroke="#6aab72" stroke-width="2"/>
+      <text x="380" y="450" text-anchor="middle" fill="#6aab72" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">R</text>
+      <text x="380" y="466" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Fully Recovered</text>
+
+      <rect x="580" y="430" width="100" height="45" rx="3" fill="#1a1711" stroke="#6aab72" stroke-width="1.5"/>
+      <text x="630" y="450" text-anchor="middle" fill="#6aab72" font-size="14" font-weight="bold" font-family="'Playfair Display',serif">R_I</text>
+      <text x="630" y="466" text-anchor="middle" fill="#8a7f6a" font-size="8.5">Recovered Influ.</text>
+
+      <!-- ARROWS -->
+      <!-- S → E_P -->
+      <line x1="345" y1="35" x2="180" y2="105" stroke="#5b8fc9" stroke-width="1.2" marker-end="url(#p2)"/>
+      <text x="230" y="60" text-anchor="middle" fill="#5b8fc9" font-size="8" font-family="'JetBrains Mono',monospace">λ_P S</text>
+
+      <!-- S → E_I -->
+      <line x1="415" y1="35" x2="580" y2="105" stroke="#d47c42" stroke-width="1.2" marker-end="url(#p3)"/>
+      <text x="520" y="60" text-anchor="middle" fill="#d47c42" font-size="8" font-family="'JetBrains Mono',monospace">λ_I S</text>
+
+      <!-- E_P → I_P -->
+      <line x1="130" y1="145" x2="130" y2="208" stroke="#5b8fc9" stroke-width="1.2" marker-end="url(#p2)"/>
+      <text x="105" y="180" text-anchor="middle" fill="#5b8fc9" font-size="8" font-family="'JetBrains Mono',monospace">σ_P E_P</text>
+
+      <!-- E_I → I_I -->
+      <line x1="630" y1="145" x2="630" y2="208" stroke="#d47c42" stroke-width="1.2" marker-end="url(#p3)"/>
+      <text x="660" y="180" text-anchor="middle" fill="#d47c42" font-size="8" font-family="'JetBrains Mono',monospace">σ_I E_I</text>
+
+      <!-- I_P → T_P -->
+      <line x1="130" y1="255" x2="130" y2="318" stroke="#4a9e96" stroke-width="1.2" marker-end="url(#p4)"/>
+      <text x="100" y="290" text-anchor="middle" fill="#4a9e96" font-size="8" font-family="'JetBrains Mono',monospace">τ_P I_P</text>
+
+      <!-- I_I → T_I -->
+      <line x1="630" y1="255" x2="630" y2="318" stroke="#4a9e96" stroke-width="1.2" marker-end="url(#p4)"/>
+      <text x="660" y="290" text-anchor="middle" fill="#4a9e96" font-size="8" font-family="'JetBrains Mono',monospace">τ_I I_I</text>
+
+      <!-- T_P → R_P -->
+      <line x1="130" y1="365" x2="130" y2="428" stroke="#6aab72" stroke-width="1.2" marker-end="url(#p5)"/>
+      <text x="100" y="400" text-anchor="middle" fill="#6aab72" font-size="8" font-family="'JetBrains Mono',monospace">γ_{TP}</text>
+
+      <!-- T_I → R_I -->
+      <line x1="630" y1="365" x2="630" y2="428" stroke="#6aab72" stroke-width="1.2" marker-end="url(#p5)"/>
+      <text x="660" y="400" text-anchor="middle" fill="#6aab72" font-size="8" font-family="'JetBrains Mono',monospace">γ_{TI}</text>
+
+      <!-- I_P → I_PI (acquires I) -->
+      <line x1="180" y1="232" x2="318" y2="232" stroke="#c0463c" stroke-width="1.2" marker-end="url(#p6)"/>
+      <text x="249" y="222" text-anchor="middle" fill="#c0463c" font-size="7.5" font-family="'JetBrains Mono',monospace">φ_I λ_I</text>
+
+      <!-- I_I → I_PI (acquires P) -->
+      <line x1="580" y1="232" x2="442" y2="232" stroke="#c0463c" stroke-width="1.2" marker-end="url(#p6)"/>
+      <text x="510" y="222" text-anchor="middle" fill="#c0463c" font-size="7.5" font-family="'JetBrains Mono',monospace">φ_P λ_P</text>
+
+      <!-- I_PI → R -->
+      <line x1="380" y1="255" x2="380" y2="428" stroke="#6aab72" stroke-width="1.2" marker-end="url(#p5)"/>
+      <text x="402" y="345" text-anchor="start" fill="#6aab72" font-size="8" font-family="'JetBrains Mono',monospace">γ_{PI}</text>
+
+      <!-- R_P → R -->
+      <line x1="180" y1="452" x2="328" y2="452" stroke="#6aab72" stroke-width="1" marker-end="url(#p5)"/>
+      <text x="254" y="445" text-anchor="middle" fill="#6aab72" font-size="8" font-family="'JetBrains Mono',monospace">γ'_P</text>
+
+      <!-- R_I → R -->
+      <line x1="580" y1="452" x2="432" y2="452" stroke="#6aab72" stroke-width="1" marker-end="url(#p5)"/>
+      <text x="506" y="445" text-anchor="middle" fill="#6aab72" font-size="8" font-family="'JetBrains Mono',monospace">γ'_I</text>
+    </svg>
+    <div class="diagram-caption">Figure 8 — Pneumonia–Influenza 11-compartment co-infection model. Blue pathway: pneumonia. Orange pathway: influenza. Red: co-infection. Green: recovery. Teal: treatment. λ_P and λ_I are the forces of infection for pneumonia and influenza, respectively. φ_P, φ_I are modification factors for co-infection susceptibility.</div>
+  </div>
+
+  <h3>Forces of Infection</h3>
+
+  <p>The forces of infection (the per-capita rates at which susceptibles become infected) are:</p>
+
+  <div class="math-block">
+    $$\lambda_P = \frac{\beta_P(I_P + \epsilon_P T_P + \eta_P I_{PI})}{N}, \qquad \lambda_I = \frac{\beta_I(I_I + \epsilon_I T_I + \eta_I I_{PI})}{N}$$
+  </div>
+
+  <p>where $\epsilon_P, \epsilon_I \in [0,1]$ are reduced infectivity of treated individuals, and $\eta_P, \eta_I$ are modification factors for co-infected individuals' infectivity (often $\eta > 1$ since co-infected persons may shed more pathogen).</p>
+
+  <h3>The ODEs for the 11-Compartment Model</h3>
+  <div class="math-block">
+    $$\begin{aligned}
+    \dot{S} &= \Lambda - \lambda_P S - \lambda_I S - \mu S \\[4pt]
+    \dot{E}_P &= \lambda_P S - (\sigma_P + \mu) E_P \\[4pt]
+    \dot{E}_I &= \lambda_I S - (\sigma_I + \mu) E_I \\[4pt]
+    \dot{I}_P &= \sigma_P E_P - \phi_I \lambda_I I_P - (\tau_P + \gamma_P + \mu + \delta_P) I_P \\[4pt]
+    \dot{I}_I &= \sigma_I E_I - \phi_P \lambda_P I_I - (\tau_I + \gamma_I + \mu + \delta_I) I_I \\[4pt]
+    \dot{T}_P &= \tau_P I_P - (\gamma_{TP} + \mu) T_P \\[4pt]
+    \dot{T}_I &= \tau_I I_I - (\gamma_{TI} + \mu) T_I \\[4pt]
+    \dot{I}_{PI} &= \phi_I \lambda_I I_P + \phi_P \lambda_P I_I - (\gamma_{PI} + \mu + \delta_{PI}) I_{PI} \\[4pt]
+    \dot{R}_P &= \gamma_P I_P + \gamma_{TP} T_P - \gamma'_P R_P - \mu R_P \\[4pt]
+    \dot{R}_I &= \gamma_I I_I + \gamma_{TI} T_I - \gamma'_I R_I - \mu R_I \\[4pt]
+    \dot{R} &= \gamma_{PI} I_{PI} + \gamma'_P R_P + \gamma'_I R_I - \mu R
+    \end{aligned}$$
+  </div>
+
+  <p>where $\phi_P, \phi_I$ are <strong>susceptibility modification factors</strong> for co-infection. If $\phi_I > 1$, influenza-infected individuals are more susceptible to pneumonia (which is biologically realistic — influenza damages respiratory epithelium).</p>
+
+  <h3>Identifying Infected Compartments</h3>
+
+  <p>The infected compartments are: $\{E_P, E_I, I_P, I_I, T_P, T_I, I_{PI}\}$ — that is <strong>7 infected compartments</strong>. (Note: $T_P$ and $T_I$ are infected because treated individuals can still transmit, even at reduced rate. If treatment perfectly prevents transmission, they can be excluded.)</p>
+
+  <p>So the NGM is $7 \times 7$.</p>
+
+  <h3>Setting Up the NGM at the DFE</h3>
+
+  <p><strong>DFE:</strong> $S^* = \Lambda/\mu$, all infected classes $= 0$.</p>
+
+  <p><strong>New infection vector $\mathcal{F}$</strong> (only terms that represent a susceptible individual becoming infected):</p>
+
+  <div class="math-block">
+    $$\boldsymbol{\mathcal{F}} = \begin{pmatrix} \lambda_P S \\ \lambda_I S \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \end{pmatrix}$$
+  </div>
+
+  <p style="font-size:13px;color:var(--text-dim);">(ordering: $E_P, E_I, I_P, I_I, T_P, T_I, I_{PI}$)</p>
+
+  <p>Important: terms like $\phi_I \lambda_I I_P$ in the $\dot{I}_{PI}$ equation look like infections, but they are <em>superinfections</em> — an already-infected individual acquiring a second pathogen. By the strict NGM definition, new infections are only those from $S$. Some authors do include superinfection in $\mathcal{F}$; this gives a different (higher) bound called the <em>type reproduction number</em>. Here we follow the standard Driessche–Watmough convention: only $S \to$ infected transitions enter $\mathcal{F}$.</p>
+
+  <p><strong>Transition vector $\mathcal{V}$</strong>:</p>
+
+  <div class="math-block">
+    $$\boldsymbol{\mathcal{V}} = \begin{pmatrix}
+    (\sigma_P+\mu)E_P \\
+    (\sigma_I+\mu)E_I \\
+    -\sigma_P E_P + k_P I_P \\
+    -\sigma_I E_I + k_I I_I \\
+    -\tau_P I_P + (\gamma_{TP}+\mu)T_P \\
+    -\tau_I I_I + (\gamma_{TI}+\mu)T_I \\
+    (\gamma_{PI}+\mu+\delta_{PI})I_{PI}
+    \end{pmatrix}$$
+  </div>
+
+  <p>where $k_P = \tau_P + \gamma_P + \mu + \delta_P$ and $k_I = \tau_I + \gamma_I + \mu + \delta_I$.</p>
+
+  <h3>The F and V Matrices</h3>
+
+  <p>At the DFE where $S^* = N = \Lambda/\mu$, expanding $\lambda_P S = \beta_P(I_P + \epsilon_P T_P + \eta_P I_{PI})$ and similarly for $\lambda_I S$:</p>
+
+  <div class="math-block">
+    $$\mathbf{F} = \begin{pmatrix}
+    0 & 0 & \beta_P & 0 & \beta_P\epsilon_P & 0 & \beta_P\eta_P \\
+    0 & 0 & 0 & \beta_I & 0 & \beta_I\epsilon_I & \beta_I\eta_I \\
+    0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 & 0
+    \end{pmatrix}$$
+  </div>
+
+  <div class="math-block">
+    $$\mathbf{V} = \begin{pmatrix}
+    \sigma_P+\mu & 0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & \sigma_I+\mu & 0 & 0 & 0 & 0 & 0 \\
+    -\sigma_P & 0 & k_P & 0 & 0 & 0 & 0 \\
+    0 & -\sigma_I & 0 & k_I & 0 & 0 & 0 \\
+    0 & 0 & -\tau_P & 0 & \gamma_{TP}+\mu & 0 & 0 \\
+    0 & 0 & 0 & -\tau_I & 0 & \gamma_{TI}+\mu & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 & \gamma_{PI}+\mu+\delta_{PI}
+    \end{pmatrix}$$
+  </div>
+
+  <h3>Computing the Next Generation Matrix K = FV⁻¹</h3>
+
+  <p>Notice that $\mathbf{V}$ has a block structure: it decomposes into independent blocks for disease $P$, disease $I$, and co-infection. Specifically:</p>
+
+  <div class="math-block">
+    $$\mathbf{V} = \text{blockdiag}(\mathbf{V}_P, \mathbf{V}_I, v_{PI})$$
+  </div>
+
+  <p>where $\mathbf{V}_P = \begin{pmatrix}\sigma_P+\mu & 0 & 0 \\ -\sigma_P & k_P & 0 \\ 0 & -\tau_P & \gamma_{TP}+\mu\end{pmatrix}$, similarly $\mathbf{V}_I$, and $v_{PI} = \gamma_{PI}+\mu+\delta_{PI}$ (a scalar).</p>
+
+  <p>The inverse $\mathbf{V}^{-1}$ is therefore also block diagonal:</p>
+
+  <div class="math-block">
+    $$\mathbf{V}^{-1}_P = \begin{pmatrix} \frac{1}{a_P} & 0 & 0 \\ \frac{\sigma_P}{a_P k_P} & \frac{1}{k_P} & 0 \\ \frac{\sigma_P\tau_P}{a_P k_P b_P} & \frac{\tau_P}{k_P b_P} & \frac{1}{b_P} \end{pmatrix}$$
+  </div>
+
+  <p>where $a_P = \sigma_P+\mu$, $b_P = \gamma_{TP}+\mu$. Similarly for $I$.</p>
+
+  <p>Now compute $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$. Only rows 1 and 2 of $\mathbf{F}$ are non-zero, so only rows 1 and 2 of $\mathbf{K}$ are non-zero. The key entries are:</p>
+
+  <div class="box box-method">
+    <span class="box-title">Key NGM Entries</span>
+    <p>Let $\Pi_P = \frac{\sigma_P}{\sigma_P+\mu}$ (probability of surviving the pneumonia latent period) and $\Pi_I = \frac{\sigma_I}{\sigma_I+\mu}$ similarly. Also let $R_P^0 = \frac{\beta_P}{k_P}\left(1 + \frac{\epsilon_P\tau_P}{\gamma_{TP}+\mu}\right)$ and $R_I^0 = \frac{\beta_I}{k_I}\left(1+\frac{\epsilon_I\tau_I}{\gamma_{TI}+\mu}\right)$.</p>
+    <p style="margin-top:0.7rem;">Then the two non-zero eigenvalues of $\mathbf{K}$ are:</p>
+    <p>$$\lambda_1 = \Pi_P \cdot R_P^0 = \frac{\beta_P\sigma_P}{(\sigma_P+\mu)k_P}\left(1+\frac{\epsilon_P\tau_P}{\gamma_{TP}+\mu}\right)$$</p>
+    <p>$$\lambda_2 = \Pi_I \cdot R_I^0 = \frac{\beta_I\sigma_I}{(\sigma_I+\mu)k_I}\left(1+\frac{\epsilon_I\tau_I}{\gamma_{TI}+\mu}\right)$$</p>
+    <p>All other eigenvalues are zero (since only two rows of $\mathbf{F}$ are non-zero).</p>
+  </div>
+
+  <p>Therefore, the basic reproduction number for the 11-compartment pneumonia–influenza co-infection model is:</p>
+
+  <div class="math-block">
+    $$\boxed{R_0 = \max(R_0^P,\ R_0^I)}$$
+  </div>
+
+  <p>where:</p>
+
+  <div class="math-block">
+    $$R_0^P = \frac{\beta_P \sigma_P}{(\sigma_P+\mu)(\tau_P + \gamma_P + \mu + \delta_P)}\left(1 + \frac{\epsilon_P\tau_P}{\gamma_{TP}+\mu}\right)$$
+  </div>
+
+  <div class="math-block">
+    $$R_0^I = \frac{\beta_I \sigma_I}{(\sigma_I+\mu)(\tau_I + \gamma_I + \mu + \delta_I)}\left(1 + \frac{\epsilon_I\tau_I}{\gamma_{TI}+\mu}\right)$$
+  </div>
+
+  <div class="box box-insight">
+    <span class="box-title">Why Does Co-infection Not Change the Formula?</span>
+    <p>Just as with simpler co-infection models, the superinfection terms (influenza-infected getting pneumonia, or vice versa) are products of two infected quantities. At the DFE, these are all zero — they don't contribute to the linearised $\mathbf{F}$ matrix. The co-infected compartment $I_{PI}$ has zero in its $\mathbf{F}$ row because new individuals don't flow directly from $S$ to $I_{PI}$ (they must first be singly infected). This is why, remarkably, even a complex 11-compartment model gives an $R_0$ that takes the clean max-of-two-diseases form.</p>
+  </div>
+
+  <h3>Biological Interpretation of Each Factor</h3>
+
+  <table>
+    <tr><th>Factor</th><th>Formula</th><th>Meaning</th></tr>
+    <tr><td>Latent period survival</td><td>$\frac{\sigma_P}{\sigma_P+\mu}$</td><td>Prob. exposed person survives to become infectious</td></tr>
+    <tr><td>Transmission rate</td><td>$\frac{\beta_P}{k_P}$</td><td>Infections per infective, adjusted for all exit rates from $I_P$</td></tr>
+    <tr><td>Treatment contribution</td><td>$\frac{\epsilon_P\tau_P}{\gamma_{TP}+\mu}$</td><td>Additional infections generated while under treatment</td></tr>
+    <tr><td>$k_P$ denominator</td><td>$\tau_P+\gamma_P+\mu+\delta_P$</td><td>All rates removing people from $I_P$ (treatment, recovery, death)</td></tr>
+  </table>
+
+  <div class="box box-example">
+    <span class="box-title">Numerical Example — Pneumonia-Influenza Model</span>
+    <p>Suppose (all rates in per day):</p>
+    <p>Pneumonia: $\beta_P = 0.35$, $\sigma_P = 0.2$, $\tau_P = 0.1$, $\gamma_P = 0.12$, $\gamma_{TP} = 0.15$, $\mu = 0.00003$, $\delta_P = 0.002$, $\epsilon_P = 0.3$</p>
+    <p>Influenza: $\beta_I = 0.5$, $\sigma_I = 0.33$, $\tau_I = 0.05$, $\gamma_I = 0.1$, $\gamma_{TI} = 0.14$, $\delta_I = 0.001$, $\epsilon_I = 0.2$</p>
+    <p>Then: $k_P = 0.1+0.12+0.00003+0.002 \approx 0.222$, $k_I = 0.05+0.1+0.00003+0.001 \approx 0.151$</p>
+    <p>$$R_0^P = \frac{0.35 \times 0.2}{0.2 \times 0.222}\left(1+\frac{0.3\times0.1}{0.15}\right) = \frac{0.07}{0.0444}\times 1.2 \approx 1.576\times1.2 \approx 1.89$$</p>
+    <p>$$R_0^I = \frac{0.5 \times 0.33}{0.33 \times 0.151}\left(1+\frac{0.2\times0.05}{0.14}\right) = \frac{0.165}{0.0498}\times 1.071 \approx 3.31\times1.071 \approx 3.55$$</p>
+    <p>$$\therefore R_0 = \max(1.89,\ 3.55) = \mathbf{3.55}$$</p>
+    <p>Influenza dominates; the system threshold is 3.55. To eliminate the outbreak, both $R_0^P < 1$ and $R_0^I < 1$ must hold simultaneously.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- SECTION 14: INTERPRETATION & CONTROL -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="section" id="interpretation">
+  <span class="section-number">Section 14</span>
+  <h2 class="section-title">Interpretation, Control Thresholds &amp; Herd Immunity</h2>
+
+  <h3>Herd Immunity Threshold</h3>
+  <p>What fraction of the population needs to be immune to prevent an epidemic? This is the <strong>herd immunity threshold</strong> $p_c$:</p>
+
+  <div class="math-block">
+    $$p_c = 1 - \frac{1}{R_0}$$
+  </div>
+
+  <p>If we vaccinate (or achieve natural immunity in) a fraction $p \geq p_c$ of the population, then $R_0^{eff} = R_0(1-p) < 1$ and the disease cannot spread.</p>
+
+  <div class="box box-example">
+    <span class="box-title">Herd Immunity Examples</span>
+    <p>Influenza ($R_0 \approx 3.55$): $p_c = 1 - 1/3.55 \approx 0.72$ → need 72% immune</p>
+    <p>Pneumonia ($R_0 \approx 1.89$): $p_c = 1 - 1/1.89 \approx 0.47$ → need 47% immune</p>
+    <p>Measles ($R_0 \approx 15$): $p_c = 1 - 1/15 \approx 0.93$ → need 93% immune</p>
+  </div>
+
+  <h3>Sensitivity Analysis of R₀</h3>
+
+  <p>To understand which parameters most affect $R_0$, we compute <strong>sensitivity indices</strong>:</p>
+
+  <div class="math-block">
+    $$\Upsilon^{R_0}_{\theta} = \frac{\partial R_0}{\partial \theta} \cdot \frac{\theta}{R_0}$$
+  </div>
+
+  <p>This gives the percentage change in $R_0$ per percentage change in parameter $\theta$. Parameters with $\Upsilon > 0$ increase $R_0$ when increased; those with $\Upsilon < 0$ decrease it.</p>
+
+  <div class="box box-example">
+    <span class="box-title">Sensitivity for the Pneumonia SEIRT Component</span>
+    <p>For $R_0^P = \frac{\beta_P\sigma_P}{(\sigma_P+\mu)k_P}\left(1 + \frac{\epsilon_P\tau_P}{\gamma_{TP}+\mu}\right)$:</p>
+    <p>$\Upsilon^{R_0^P}_{\beta_P} = +1$ (doubling $\beta_P$ doubles $R_0^P$)</p>
+    <p>$\Upsilon^{R_0^P}_{\gamma_P} < 0$ (increasing recovery rate reduces $R_0^P$)</p>
+    <p>$\Upsilon^{R_0^P}_{\tau_P}$: mixed — increasing treatment rate $\tau_P$ increases $k_P$ (reducing $R_0$) but also increases the treatment contribution term (if $\epsilon_P > 0$). Net effect depends on parameters.</p>
+  </div>
+
+  <h3>Control Strategies and Their Impact on R₀</h3>
+
+  <table>
+    <tr><th>Strategy</th><th>Target Parameter</th><th>Effect on R₀</th></tr>
+    <tr><td>Vaccination</td><td>Reduces effective $S$ (reduces $\beta$ force)</td><td>Multiplicative reduction: $R_0^{eff} = R_0(1-v)$ where $v$ = vaccine coverage × efficacy</td></tr>
+    <tr><td>Treatment</td><td>Increases $\tau$, reduces $\epsilon$ (isolation)</td><td>Increases $k_P$ denominator (↓ R₀); reduces infectivity of treated class</td></tr>
+    <tr><td>Social distancing</td><td>Reduces $\beta$ (contact rate)</td><td>Linearly reduces $R_0$</td></tr>
+    <tr><td>Improve recovery</td><td>Increases $\gamma$</td><td>Increases denominator $k$, reduces $R_0$</td></tr>
+    <tr><td>Reduce incubation (early detection)</td><td>Increases $\sigma$</td><td>Marginal effect on $R_0$ — mostly affects epidemic timing</td></tr>
+  </table>
+
+  <h3>Summary: The R₀ Formula Progression</h3>
+
+  <table>
+    <tr><th>Model</th><th>Infected Compartments</th><th>R₀ Formula</th></tr>
+    <tr><td>SIR</td><td>1: $I$</td><td>$\dfrac{\beta}{\gamma+\mu}$</td></tr>
+    <tr><td>SEIR</td><td>2: $E, I$</td><td>$\dfrac{\beta\sigma}{(\sigma+\mu)(\gamma+\mu)}$</td></tr>
+    <tr><td>SEIRT</td><td>3: $E, I, T$</td><td>$\dfrac{\beta\sigma}{(\sigma+\mu)k}\left(1+\dfrac{\epsilon\tau}{\gamma_T+\mu}\right)$</td></tr>
+    <tr><td>Basic co-infection</td><td>3: $I_A, I_B, I_{AB}$</td><td>$\max(R_0^A, R_0^B)$</td></tr>
+    <tr><td>SEIR co-infection</td><td>6: $E_A, I_A, E_B, I_B, E_{AB}, I_{AB}$</td><td>$\max(R_0^{SEIR,A}, R_0^{SEIR,B})$</td></tr>
+    <tr><td>Pneumonia–Influenza (11-compartment)</td><td>7: $E_P, E_I, I_P, I_I, T_P, T_I, I_{PI}$</td><td>$\max(R_0^P, R_0^I)$</td></tr>
+  </table>
+
+  <div class="box box-warning">
+    <span class="box-title">Important Caveat</span>
+    <p>The clean $\max(R_0^A, R_0^B)$ result holds <strong>only at the fully disease-free equilibrium</strong>. In practice, if one disease is already circulating, the <em>invasion</em> threshold for the second disease will differ (it could be higher or lower than $R_0^B$ at the DFE) depending on whether the first disease increases or decreases susceptibility to the second. For full analysis, compute the invasion reproduction numbers at boundary equilibria as well.</p>
+  </div>
+
+  <hr/>
+
+  <div class="box box-definition" style="margin-top:2.5rem;">
+    <span class="box-title">Take-Home Messages</span>
+    <p><strong>1.</strong> $R_0$ is always computed via the Next Generation Matrix $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$, with $R_0 = \rho(\mathbf{K})$.</p>
+    <p style="margin-top:0.5rem;"><strong>2.</strong> $\mathbf{F}$ contains ONLY new infection terms ($S \to$ infected). All other transitions go into $\mathbf{V}$.</p>
+    <p style="margin-top:0.5rem;"><strong>3.</strong> Products of infected classes vanish at the DFE, so co-infection interaction terms do NOT affect $R_0$ at the fully disease-free state.</p>
+    <p style="margin-top:0.5rem;"><strong>4.</strong> For co-infection models, $R_0 = \max(R_0^{\text{disease A}}, R_0^{\text{disease B}})$ at the DFE — the disease with higher transmissibility dominates the threshold.</p>
+    <p style="margin-top:0.5rem;"><strong>5.</strong> To eradicate co-infection, you need <em>both</em> $R_0^A < 1$ <em>and</em> $R_0^B < 1$ simultaneously.</p>
+    <p style="margin-top:0.5rem;"><strong>6.</strong> Adding treatment compartments adds a bracket factor $\left(1 + \frac{\epsilon\tau}{\gamma_T+\mu}\right)$ to $R_0$ — treatment reduces $R_0$ when it increases $k$ faster than the bracket grows.</p>
+  </div>
+
+  <p style="margin-top:2rem; font-size:14px; color:var(--text-dim); font-style:italic;">
+    <strong>References:</strong> van den Driessche, P. &amp; Watmough, J. (2002). Reproduction numbers and sub-threshold endemic equilibria for compartmental models of disease transmission. <em>Mathematical Biosciences</em>, 180(1), 29–48. | Diekmann, O., Heesterbeek, J.A.P. &amp; Roberts, M.G. (2010). The construction of next-generation matrices for compartmental epidemic models. <em>Journal of the Royal Society Interface</em>, 7(47), 873–885.
+  </p>
+
+</section>
+
+  </div>
+</div>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const scrollTop = document.documentElement.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const progress = (scrollTop / scrollHeight) * 100;
+    document.getElementById('progressFill').style.width = progress + '%';
+  });
+
+  // Active nav link
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const activeLink = document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if (activeLink) activeLink.classList.add('active');
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '-10% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
