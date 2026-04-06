@@ -656,15 +656,15 @@
   </div>
 
   <h3>Step-by-Step Algorithm</h3>
-  <ol class="steps">
-    <li><strong>Write down the system of ODEs</strong> for each compartment. Clearly identify which compartments are "infected" (i.e., people in these states can transmit the disease).</li>
-    <li><strong>Find the Disease-Free Equilibrium (DFE)</strong>: Set all infected compartments to zero and solve for the equilibrium. This gives you the baseline state ($S^* = N$, all infected classes $= 0$).</li>
-    <li><strong>Identify infected compartments</strong>. Let there be $n$ such compartments (e.g., $E, I$ in SEIR gives $n=2$). Write the equations for these $n$ compartments.</li>
-    <li><strong>Decompose</strong> the right-hand side of infected compartment equations as: $\dot{x}_i = \mathcal{F}_i(\mathbf{x}) - \mathcal{V}_i(\mathbf{x})$, where $\mathcal{F}_i$ contains <strong>only</strong> new infection terms (inflow from susceptible class via transmission), and $\mathcal{V}_i$ contains all other transitions (disease progression, recovery, death).</li>
-    <li><strong>Linearise</strong> at the DFE: Compute the Jacobian matrices $\mathbf{F} = \left[\frac{\partial \mathcal{F}_i}{\partial x_j}\right]_{DFE}$ and $\mathbf{V} = \left[\frac{\partial \mathcal{V}_i}{\partial x_j}\right]_{DFE}$. Both $\mathbf{F}$ and $\mathbf{V}$ are $n \times n$ matrices.</li>
-    <li><strong>Compute $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$</strong>. Each entry $K_{ij}$ represents the expected number of new infections in compartment $i$ caused by an individual in compartment $j$, over their infectious lifetime.</li>
-    <li><strong>Find $R_0 = \rho(\mathbf{K})$</strong> — the largest eigenvalue of $\mathbf{K}$.</li>
-  </ol>
+<table class="steps">
+  <tr>    <td><strong>1.</strong></td>    <td>      <strong>Write down the system of ODEs</strong> for each compartment.       Clearly identify which compartments are "infected" (i.e., people in these states can transmit the disease).    </td>  </tr>
+  <tr>    <td><strong>2.</strong></td>    <td>      <strong>Find the Disease-Free Equilibrium (DFE)</strong>:       Set all infected compartments to zero and solve for the equilibrium.       This gives you the baseline state ($S^* = N$, all infected classes $= 0$).    </td>  </tr>
+  <tr>    <td><strong>3.</strong></td>    <td>      <strong>Identify infected compartments</strong>.       Let there be $n$ such compartments (e.g., $E, I$ in SEIR gives $n=2$).       Write the equations for these $n$ compartments.    </td>  </tr>
+  <tr>    <td><strong>4.</strong></td>    <td>      <strong>Decompose</strong> the right-hand side of infected compartment equations as:       $\dot{x}_i = \mathcal{F}_i(\mathbf{x}) - \mathcal{V}_i(\mathbf{x})$,       where $\mathcal{F}_i$ contains <strong>only</strong> new infection terms, and       $\mathcal{V}_i$ contains all other transitions (disease progression, recovery, death).    </td>  </tr>
+  <tr>    <td><strong>5.</strong></td>    <td>      <strong>Linearise</strong> at the DFE:       Compute the Jacobian matrices       $\mathbf{F} = \left[\frac{\partial \mathcal{F}_i}{\partial x_j}\right]_{DFE}$       and $\mathbf{V} = \left[\frac{\partial \mathcal{V}_i}{\partial x_j}\right]_{DFE}$.       Both $\mathbf{F}$ and $\mathbf{V}$ are $n \times n$ matrices.    </td>  </tr>
+  <tr>    <td><strong>6.</strong></td>    <td>      <strong>Compute $\mathbf{K} = \mathbf{F}\mathbf{V}^{-1}$</strong>.       Each entry $K_{ij}$ represents the expected number of new infections in compartment $i$       caused by an individual in compartment $j$, over their infectious lifetime.    </td>  </tr>
+  <tr>    <td><strong>7.</strong></td>    <td>      <strong>Find $R_0 = \rho(\mathbf{K})$</strong> — the largest eigenvalue of $\mathbf{K}$.    </td>  </tr>
+</table>
 
   <div class="box box-warning">
     <span class="box-title">Critical Rule</span>
